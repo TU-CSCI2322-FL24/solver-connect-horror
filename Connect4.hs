@@ -1,5 +1,5 @@
 Player = Red | Yellow
-Position = Move Player
-Game = [[Position]]
-Winnter = (Move, [Position]) | Game
+Position = Move Player | Empty
+Game = [[Position]] --[position] is by column
+Winner = (Move, [Position]) | Game
 Move = Int
