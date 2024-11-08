@@ -1,5 +1,9 @@
-Player = Red | Yellow
-Position = Move Player | Empty
-Game = [[Position]] --[position] is by column
-Winner = (Move, [Position]) | Game
-Move = Int
+
+--Data declaration
+data Player = Red | Yellow
+data Position = Move Player | Empty
+data Winner = Tuple (Player, [Position]) | Game
+
+--Type declaration
+type Move = Int
+type Game = [[Position]]
