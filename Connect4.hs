@@ -29,6 +29,8 @@ type Move = Int
        6 -  -  -  -  -  -  -        -}
 type Game = [[Position]]
 
+
+
 {-Indexing for board positions with this code starts at 1, i.e. 
   Game is assumed to be the set with indexes 1,2,3,4,5,6,7
   NOT 0,1,2,3,4,5,6 
