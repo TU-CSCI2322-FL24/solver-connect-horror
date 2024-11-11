@@ -31,6 +31,7 @@ type Game = [[Position]]
 
 
 
+
 {-Indexing for board positions with this code starts at 1, i.e. 
   Game is assumed to be the set with indexes 1,2,3,4,5,6,7
   NOT 0,1,2,3,4,5,6 
@@ -40,3 +41,7 @@ checkMove :: Game -> Move -> Bool
 checkMove [] _ = error "Column not in board"
 checkMove (x:_) 1 = Empty `elem` x
 checkMove (x:xs) move = checkMove xs (move-1)
+
+validMoves :: Game -> [Move]
+validMoves board = [column | column <- [1..7], checkMove board column]
+
