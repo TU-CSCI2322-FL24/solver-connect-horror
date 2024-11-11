@@ -12,7 +12,7 @@ data Position = Player Player | Empty deriving (Eq, Show)
 --QUESTION: instead of having a tuple (Player, [Positions]), could we just have the winning player color?
 --          the set of positions could be complicated to grab, and I don't think we will even do anything with it
 --          its not like we have the cords stored to change anything in our output on a win
-data Winner = Tuple (Player, [Position]) | Game deriving (Eq, Show)
+data Winner = Winner Player | None deriving (Eq, Show)
 
 --Type declaration
 --Move is the integer value of what column the move is trying to be placed in, should be in range 1-7 always
