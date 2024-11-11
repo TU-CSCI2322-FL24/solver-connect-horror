@@ -12,6 +12,7 @@ wonGame :: Game -> Winner
 wonGame game = 
     let vertical = [checkFourDown columns | columns <- game]
         horizontal = checkFourAcross helper rows
+    in if vertical == Yellow || Yellow `elem` horizontal then Yellow else if vertical == Red || Red `elem` horizontal then Red else None
 
     
 checkFourDown :: [Position] -> Winner
@@ -21,13 +22,13 @@ checkFourDown (Move Yellow:Move Yellow:Move:Move Yellow:Move Yellow:xs) = Yellow
 checkFourDown (x:xs) = checkFourDown xs
 
 checkFourAcross :: Position -> Position -> Position -> Position -> Position -> Position -> Winner
-checkFourDown _ _ Move Red Move Red Move Move Red Move Red = Red
-checkFourDown _ Move Red Move Red Move Move Red Move Red _ = Red
-checkFourDown Move Red Move Red Move Move Red Move Red _ _ = Red
-checkFourDown _ _ Move Yellow Move Yellow Move Move Yellow Move Yellow = Yellow
-checkFourDown _ Move Yellow Move Yellow Move Move Yellow Move Yellow _ = Yellow
-checkFourDown Move Yellow Move Yellow Move Move Yellow Move Yellow _ _ = Yellow
-checkFourDown _ _ _ _ = None
+checkFourAcross _ _ (Move Red) (Move Red) (Move Red) (Move Red) = Red
+checkFourAcross _ Move Red Move Red Move Red Move Red _ = Red
+checkFourAcross Move Red Move Red Move Red Move Red _ _ = Red
+checkFourAcross _ _ Move Yellow Move Yellow Move Yellow Move Yellow = Yellow
+checkFourAcross _ Move Yellow Move Yellow Move Yellow Move Yellow _ = Yellow
+checkFourAcross Move Yellow Move Yellow Move Yellow Move Yellow _ _ = Yellow
+checkFourAcross _ _ _ _ _ _ = None
 
 helper :: [Position] -> [Winner]
 helper [] = None
