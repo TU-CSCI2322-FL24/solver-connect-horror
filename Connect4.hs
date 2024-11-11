@@ -28,3 +28,21 @@ type Move = Int
        5 -  -  -  -  -  -  -
        6 -  -  -  -  -  -  -        -}
 type Game = [[Position]]
+
+PrettyPrint :: Game -> String
+PrettyPrint [] = error "Game is empty"
+PrettyPrint [(a:[]), (b:[]), (c:[]), (d:[]), (e:[]), (f:[]), (g:[])] =
+    PrettyHelper a:b:c:d:e:f:g 
+PrettyPrint [(a:as), (b:bs), (c:cs), (d:ds), (e:es), (f:fs), (g:gs)] =
+    PrettyHelper a:b:c:d:e:f:g:"/n" (PrettyPrint as:bs:cs:ds:es:fs:gs)
+
+-- Helper function which takes a [Position] and returns it in a printable way
+PrettyHelper :: [Position] -> String
+PrettyHelper (x:[]):
+    | x == Red      = "R"
+    | x == Yellow   = "Y"
+    | otherwise     = "-"
+PrettyHelper (x:xs):
+    | x == Red      = "R" : PrettyHelper xs
+    | x == Yellow   = "Y" : PrettyHelper xs
+    | otherwise     = "-" : PrettyHelper xs
