@@ -11,20 +11,27 @@ type Game = [[Position]]
 wonGame :: Game -> Winner
 wonGame game = 
     let vertical = [checkFourDown columns | columns <- game]
-        horizontal = checkFourAcross[head columns | columns <- game]
+        horizontal = checkFourAcross helper rows
 
     
 checkFourDown :: [Position] -> Winner
-checkFourDown [] = noWinner
+checkFourDown [] = None
 checkFourDown (Move Red:Move Red:Move:Move Red:Move Red:xs) = Red
 checkFourDown (Move Yellow:Move Yellow:Move:Move Yellow:Move Yellow:xs) = Yellow
 checkFourDown (x:xs) = checkFourDown xs
 
-checkFourAcross :: Position -> Position -> Position -> Position -> Winner
-checkFourDown Move Red Move Red Move Move Red Move Red = Red
-checkFourDown Move Yellow Move Yellow Move Move Yellow Move Yellow = Yellow
-checkFourDown _ _ _ _ = noWinner
+checkFourAcross :: Position -> Position -> Position -> Position -> Position -> Position -> Winner
+checkFourDown _ _ Move Red Move Red Move Move Red Move Red = Red
+checkFourDown _ Move Red Move Red Move Move Red Move Red _ = Red
+checkFourDown Move Red Move Red Move Move Red Move Red _ _ = Red
+checkFourDown _ _ Move Yellow Move Yellow Move Move Yellow Move Yellow = Yellow
+checkFourDown _ Move Yellow Move Yellow Move Move Yellow Move Yellow _ = Yellow
+checkFourDown Move Yellow Move Yellow Move Move Yellow Move Yellow _ _ = Yellow
+checkFourDown _ _ _ _ = None
 
+helper :: [Position] -> [Winner]
+helper [] = None
+helper rows = checkFourAcross (map head rows):helper (map last rows)
 
 
     {-
