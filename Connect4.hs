@@ -29,20 +29,35 @@ type Move = Int
        6 -  -  -  -  -  -  -        -}
 type Game = [[Position]]
 
-PrettyPrint :: Game -> String
-PrettyPrint [] = error "Game is empty"
-PrettyPrint [(a:[]), (b:[]), (c:[]), (d:[]), (e:[]), (f:[]), (g:[])] =
-    PrettyHelper a:b:c:d:e:f:g 
-PrettyPrint [(a:as), (b:bs), (c:cs), (d:ds), (e:es), (f:fs), (g:gs)] =
-    PrettyHelper a:b:c:d:e:f:g:"/n" (PrettyPrint as:bs:cs:ds:es:fs:gs)
+
+{- takes a game and converts it to a string, Currently using list comprehension cause
+   I got weird errors when trying to pattern match. Im leaving pattern match attempts incase we come back to it
+   Call using the following format to split new lines in output:
+   putStrLn (prettyPrint board)
+   -}
+prettyPrint :: Game -> String
+prettyPrint [[]] = []--error "Game is empty"
+prettyPrint board {-[(a:[]), (b:[]), (c:[]), (d:[]), (e:[]), (f:[]), (g:[])]-}
+    | null (head board) = error "You Lost your board"
+    | length (head board) > 1 =
+        let line = [head col | col <- board]
+            remainder = [tail col | col <- board]
+        in prettyHelper line ++ "\n" ++ prettyPrint remainder
+    | length (head board) == 1 = prettyHelper [head col | col <- board]
+    | otherwise = error "negative length list?? somehow??"
+{-prettyPrint [(a:as), (b:bs), (c:cs), (d:ds), (e:es), (f:fs), (g:gs)] =
+    prettyHelper a:b:c:d:e:f:g:"/n" (prettyPrint as:bs:cs:ds:es:fs:gs)-}
+{-prettyPrint [a,b,c,d,e,f,g]
+    | length a > 1 = prettyHelper (head a++head b++head c++head d++head e++head f ++ head g) -}
+
 
 -- Helper function which takes a [Position] and returns it in a printable way
-PrettyHelper :: [Position] -> String
-PrettyHelper (x:[]):
-    | x == Red      = "R"
-    | x == Yellow   = "Y"
-    | otherwise     = "-"
-PrettyHelper (x:xs):
-    | x == Red      = "R" : PrettyHelper xs
-    | x == Yellow   = "Y" : PrettyHelper xs
-    | otherwise     = "-" : PrettyHelper xs
+prettyHelper :: [Position] -> String
+prettyHelper [x]
+    | x == Player Red      = "R "
+    | x == Player Yellow   = "Y "
+    | otherwise            = "- "
+prettyHelper (x:xs)
+    | x == Player Red      = "R " ++ prettyHelper xs
+    | x == Player Yellow   = "Y " ++ prettyHelper xs
+    | otherwise            = "- " ++ prettyHelper xs
