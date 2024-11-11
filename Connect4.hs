@@ -34,14 +34,21 @@ type Game = [[Position]]
 
 {-Indexing for board positions with this code starts at 1, i.e. 
   Game is assumed to be the set with indexes 1,2,3,4,5,6,7
-  NOT 0,1,2,3,4,5,6 
-  TODO: figure out how to get this to work with 0 indexing
-        if we decide thats what we want-}
+  NOT 0,1,2,3,4,5,6 -}
 checkMove :: Game -> Move -> Bool
 checkMove [] _ = error "Column not in board"
-checkMove (x:_) 1 = Empty `elem` x
+checkMove (x:_) 1 = head x == Empty
 checkMove (x:xs) move = checkMove xs (move-1)
+{-checkMove might be unecessary now, we could just generate the set of moves at the beginning of
+    each turn, and check if an attempted move is a member of that set instead of calling this -}
+
 
 validMoves :: Game -> [Move]
-validMoves board = [column | column <- [1..7], checkMove board column]
+validMoves board = aux board 1
+    where aux :: Game -> Int -> [Move]
+          aux [x] ind = [ind | spaceInCol x]
+          aux (x:xs) ind = if spaceInCol x then ind:aux xs (ind+1) else aux xs (ind+1)
+--helper for validMoves
+spaceInCol :: [Position] -> Bool
+spaceInCol (x:_) = x == Empty
 
