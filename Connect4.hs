@@ -49,8 +49,6 @@ validMoves board = aux board 1
 spaceInCol :: [Position] -> Bool
 spaceInCol (x:_) = x == Empty
 
-type Game = [[Position]]
-
 wonGame :: Game -> Winner
 wonGame game =
     let vertical = [checkFourDown columns | columns <- game]
