@@ -28,3 +28,8 @@ type Move = Int
        5 -  -  -  -  -  -  -
        6 -  -  -  -  -  -  -        -}
 type Game = [[Position]]
+
+
+
+validMoves :: Game -> [Move]
+validMoves board = [column | column <- [1..7], checkMove board column]
