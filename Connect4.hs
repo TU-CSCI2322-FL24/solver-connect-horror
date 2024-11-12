@@ -29,18 +29,70 @@ type Move = Int
        6 -  -  -  -  -  -  -        -}
 type Game = [[Position]]
 
+{- takes a game and converts it to a string, Currently using list comprehension cause
+   I got weird errors when trying to pattern match. Im leaving pattern match attempts incase we come back to it
+   Call using the following format to split new lines in output:
+   putStrLn (prettyPrint board)
+   -}
+prettyPrint :: Game -> String
+prettyPrint [[]] = []--error "Game is empty"
+prettyPrint board {-[(a:[]), (b:[]), (c:[]), (d:[]), (e:[]), (f:[]), (g:[])]-}
+    | null (head board) = error "You Lost your board"
+    | length (head board) > 1 =
+        let line = [head col | col <- board]
+            remainder = [tail col | col <- board]
+        in prettyHelper line ++ "\n" ++ prettyPrint remainder
+    | length (head board) == 1 = prettyHelper [head col | col <- board]
+    | otherwise = error "negative length list?? somehow??"
+{-prettyPrint [(a:as), (b:bs), (c:cs), (d:ds), (e:es), (f:fs), (g:gs)] =
+    prettyHelper a:b:c:d:e:f:g:"/n" (prettyPrint as:bs:cs:ds:es:fs:gs)-}
+{-prettyPrint [a,b,c,d,e,f,g]
+    | length a > 1 = prettyHelper (head a++head b++head c++head d++head e++head f ++ head g) -}
+
+
+-- Helper function which takes a [Position] and returns it in a printable way
+prettyHelper :: [Position] -> String
+prettyHelper [x]
+    | x == Player Red      = "R "
+    | x == Player Yellow   = "Y "
+    | otherwise            = "- "
+prettyHelper (x:xs)
+    | x == Player Red      = "R " ++ prettyHelper xs
+    | x == Player Yellow   = "Y " ++ prettyHelper xs
+    | otherwise            = "- " ++ prettyHelper xs
+
+{-Indexing for board positions with this code starts at 1, i.e. 
+  Game is assumed to be the set with indexes 1,2,3,4,5,6,7
+  NOT 0,1,2,3,4,5,6 -}
+checkMove :: Game -> Move -> Bool
+checkMove [] _ = error "Column not in board"
+checkMove (x:_) 1 = head x == Empty
+checkMove (x:xs) move = checkMove xs (move-1)
+{-checkMove might be unecessary now, we could just generate the set of moves at the beginning of
+    each turn, and check if an attempted move is a member of that set instead of calling this -}
+
+
+validMoves :: Game -> [Move]
+validMoves board = aux board 1
+    where aux :: Game -> Int -> [Move]
+          aux [x] ind = [ind | spaceInCol x]
+          aux (x:xs) ind = if spaceInCol x then ind:aux xs (ind+1) else aux xs (ind+1)
+--helper for validMoves
+spaceInCol :: [Position] -> Bool
+spaceInCol (x:_) = x == Empty
+
 -- runs through all posibilities of vertical horizontal and diagonal win states, if any find a
 -- winner it is returned
 wonGame :: Game -> Winner
-wonGame game = 
+wonGame game =
     let vertical = [checkFourDown columns | columns <- game]
-        horizontal = helperHorizontal game 
+        horizontal = helperHorizontal game
         diagonalDown = helperDiagonalDown game
         diagonalUp = helperDiagonalUp game
     in if Winner Yellow `elem` vertical || Winner Yellow == horizontal || Winner Yellow == diagonalDown || Winner Yellow == diagonalUp
-       then Winner Yellow 
+       then Winner Yellow
        else if Winner Red `elem` vertical || Winner Red == horizontal || Winner Red == diagonalDown || Winner Red == diagonalUp
-       then Winner Red 
+       then Winner Red
        else None
 
 -- checks if there are four in a row vertically
@@ -77,5 +129,6 @@ helperDiagonalDown (_:xs) = None
 -- sends four diagonal pieces starting from bottom left to top right to checkFourAcross function
 helperDiagonalUp :: [[Position]] -> Winner
 helperDiagonalUp (lst1:lst2:lst3:lst4:xs) = orW winner (helperDiagonalUp (lst2:lst3:lst4:xs))
-   where winner = checkFourAcross (drop 3 lst1) (drop 2 lst2) (drop 1 lst3) lst4 
+   where winner = checkFourAcross (drop 3 lst1) (drop 2 lst2) (drop 1 lst3) lst4
 helperDiagonalUp (_:xs) = None
+
