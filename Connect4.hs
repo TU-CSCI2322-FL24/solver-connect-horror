@@ -30,14 +30,18 @@ type Move = Int
 type Game = (Player, Board)
 type Board = [[Position]]
 
+-- make move takes in a game, a move the player is attempting to make, and returns the new board with that
+-- player's move if it was valid. currently throws an error if move is out of bounds, but for some reason the
+-- error doesn't show until the new board is attempted to be printed
 makeMove :: Game -> Move -> Game
 makeMove (player, board) move 
   | checkMove board move = 
       let (pre, col:after) = splitAt (move-1) board
-          lengthEmpty = length [space | space <- board, space == Empty]
+          lengthEmpty = length [space | space <- col, space == Empty]
           (empty, _:tokens) = splitAt (lengthEmpty-1) col
           newCol = empty ++ Player player:tokens
-      in pre ++ newCol:after
+      in (player, pre ++ newCol:after)
+  | otherwise = error "Invalid Move"
       
 {- takes a game and converts it to a string, Currently using list comprehension cause
    I got weird errors when trying to pattern match. Im leaving pattern match attempts incase we come back to it
@@ -141,10 +145,14 @@ helperDiagonalUp (_:xs) = None
 
 blankBoard = replicate 7 (replicate 6 Empty)
 
-sampleBoard = [[Empty,Empty,Empty,Empty,Empty,Player Red],
+sampleBoard = [[Empty,Empty,Empty,Player Red,Player Red,Player Red],
                [Empty,Empty,Empty,Empty,Empty,Player Yellow],
-               [Empty,Empty,Empty,Empty,Player Red,Player Red],
+               [Player Red,Player Red,Player Yellow,Player Yellow,Player Red,Player Red],
+               [Empty,Empty,Empty,Empty,Player Yellow,Player Yellow],
                [Empty,Empty,Empty,Empty,Empty,Empty],
-               [Empty,Empty,Empty,Empty,Empty,Empty],
-               [Empty,Empty,Empty,Empty,Empty,Empty],
-               [Empty,Empty,Empty,Empty,Empty,Empty]]
+               [Empty,Player Yellow,Player Yellow,Player Red,Player Red,Player Yellow],
+               [Empty,Empty,Empty,Empty,Empty,Player Yellow]]
+               --9 red 9 yellow
+sampleGameR = (Red, sampleBoard)
+sampleGameY = (Yellow, sampleBoard)
+               --can be anyones turn, there is a winning move for red and yellow
