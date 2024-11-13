@@ -30,6 +30,9 @@ type Move = Int
 type Game = (Player, Board)
 type Board = [[Position]]
 
+-- make move takes in a game, a move the player is attempting to make, and returns the new board with that
+-- player's move if it was valid. currently throws an error if move is out of bounds, but for some reason the
+-- error doesn't show until the new board is attempted to be printed
 makeMove :: Game -> Move -> Game
 makeMove (player, board) move 
   | checkMove board move = 
