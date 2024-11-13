@@ -27,14 +27,24 @@ type Move = Int
        4 -  -  -  -  -  -  -
        5 -  -  -  -  -  -  -
        6 -  -  -  -  -  -  -        -}
-type Game = [[Position]]
+type Game = (Player, Board)
+type Board = [[Position]]
 
+makeMove :: Game -> Move -> Game
+makeMove (player, board) move 
+  | checkMove board move = 
+      let (pre, col:after) = splitAt (move-1) board
+          lengthEmpty = length [space | space <- board, space == Empty]
+          (empty, _:tokens) = splitAt (lengthEmpty-1) col
+          newCol = empty ++ Player player:tokens
+      in pre ++ newCol:after
+      
 {- takes a game and converts it to a string, Currently using list comprehension cause
    I got weird errors when trying to pattern match. Im leaving pattern match attempts incase we come back to it
    Call using the following format to split new lines in output:
    putStrLn (prettyPrint board)
    -}
-prettyPrint :: Game -> String
+prettyPrint :: Board -> String
 prettyPrint [[]] = []--error "Game is empty"
 prettyPrint board
     | null (head board) = error "You Lost your board"
@@ -61,7 +71,7 @@ prettyHelper (x:xs)
 {-Indexing for board positions with this code starts at 1, i.e. 
   Game is assumed to be the set with indexes 1,2,3,4,5,6,7
   NOT 0,1,2,3,4,5,6 -}
-checkMove :: Game -> Move -> Bool
+checkMove :: Board -> Move -> Bool
 checkMove [] _ = error "Column not in board"
 checkMove (x:_) 1 = head x == Empty
 checkMove (x:xs) move = checkMove xs (move-1)
@@ -69,9 +79,9 @@ checkMove (x:xs) move = checkMove xs (move-1)
     each turn, and check if an attempted move is a member of that set instead of calling this -}
 
 
-validMoves :: Game -> [Move]
+validMoves :: Board -> [Move]
 validMoves board = aux board 1
-    where aux :: Game -> Int -> [Move]
+    where aux :: Board -> Int -> [Move]
           aux [x] ind = [ind | spaceInCol x]
           aux (x:xs) ind = if spaceInCol x then ind:aux xs (ind+1) else aux xs (ind+1)
 --helper for validMoves
@@ -80,7 +90,7 @@ spaceInCol (x:_) = x == Empty
 
 -- runs through all posibilities of vertical horizontal and diagonal win states, if any find a
 -- winner it is returned
-wonGame :: Game -> Winner
+wonGame :: Board -> Winner
 wonGame game =
     let vertical = [checkFourDown columns | columns <- game]
         horizontal = helperHorizontal game
