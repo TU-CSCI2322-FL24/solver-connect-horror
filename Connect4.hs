@@ -30,17 +30,25 @@ type Move = Int
 type Game = (Player, Board)
 type Board = [[Position]]
 
--- make move takes in a game, a move the player is attempting to make, and returns the new board with that
--- player's move if it was valid. currently throws an error if move is out of bounds, but for some reason the
--- error doesn't show until the new board is attempted to be printed
+-- make move takes in a game, a move the player is attempting to make, and returns the new game on the other
+-- players turn with that player's move if it was valid. currently throws an error if move is out of bounds,
+-- but for some reason the error doesn't show until the new board is attempted to be printed
 makeMove :: Game -> Move -> Game
-makeMove (player, board) move 
+makeMove (Red, board) move 
   | checkMove board move = 
       let (pre, col:after) = splitAt (move-1) board
           lengthEmpty = length [space | space <- col, space == Empty]
           (empty, _:tokens) = splitAt (lengthEmpty-1) col
-          newCol = empty ++ Player player:tokens
-      in (player, pre ++ newCol:after)
+          newCol = empty ++ Player Red:tokens
+      in (Yellow, pre ++ newCol:after)
+  | otherwise = error "Invalid Move"
+makeMove (Yellow, board) move 
+  | checkMove board move = 
+      let (pre, col:after) = splitAt (move-1) board
+          lengthEmpty = length [space | space <- col, space == Empty]
+          (empty, _:tokens) = splitAt (lengthEmpty-1) col
+          newCol = empty ++ Player Yellow:tokens
+      in (Red, pre ++ newCol:after)
   | otherwise = error "Invalid Move"
       
 {- takes a game and converts it to a string, Currently using list comprehension cause
