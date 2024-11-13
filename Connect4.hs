@@ -36,7 +36,7 @@ type Game = [[Position]]
    -}
 prettyPrint :: Game -> String
 prettyPrint [[]] = []--error "Game is empty"
-prettyPrint board {-[(a:[]), (b:[]), (c:[]), (d:[]), (e:[]), (f:[]), (g:[])]-}
+prettyPrint board
     | null (head board) = error "You Lost your board"
     | length (head board) > 1 =
         let line = [head col | col <- board]
@@ -52,10 +52,7 @@ prettyPrint board {-[(a:[]), (b:[]), (c:[]), (d:[]), (e:[]), (f:[]), (g:[])]-}
 
 -- Helper function which takes a [Position] and returns it in a printable way
 prettyHelper :: [Position] -> String
-prettyHelper [x]
-    | x == Player Red      = "R "
-    | x == Player Yellow   = "Y "
-    | otherwise            = "- "
+prettyHelper [] = ""
 prettyHelper (x:xs)
     | x == Player Red      = "R " ++ prettyHelper xs
     | x == Player Yellow   = "Y " ++ prettyHelper xs
@@ -98,14 +95,14 @@ wonGame game =
 -- checks if there are four in a row vertically
 checkFourDown :: [Position] -> Winner
 checkFourDown [] = None
-checkFourDown (Move Red:Move Red:Move Red:Move Red:xs) = Winner Red
-checkFourDown (Move Yellow:Move Yellow:Move Yellow:Move Yellow:xs) = Winner Yellow
+checkFourDown (Player Red:Player Red:Player Red:Player Red:xs) = Winner Red
+checkFourDown (Player Yellow:Player Yellow:Player Yellow:Player Yellow:xs) = Winner Yellow
 checkFourDown (x:xs) = checkFourDown xs
 
 -- checks if there are four in a row horizontally, either straight across or diagonal
 checkFourAcross :: [Position] -> [Position] -> [Position] -> [Position] -> Winner
-checkFourAcross (Move Red:_) (Move Red:_) (Move Red:_) (Move Red:_) = Winner Red
-checkFourAcross (Move Yellow:_) (Move Yellow:_) (Move Yellow:_) (Move Yellow:_) = Winner Yellow
+checkFourAcross (Player Red:_) (Player Red:_) (Player Red:_) (Player Red:_) = Winner Red
+checkFourAcross (Player Yellow:_) (Player Yellow:_) (Player Yellow:_) (Player Yellow:_) = Winner Yellow
 checkFourAcross (_:lst1) (_:lst2) (_:lst3) (_:lst4) = checkFourAcross lst1 lst2 lst3 lst4
 checkFourAcrosss _ _ _ _ = None
 
@@ -132,3 +129,12 @@ helperDiagonalUp (lst1:lst2:lst3:lst4:xs) = orW winner (helperDiagonalUp (lst2:l
    where winner = checkFourAcross (drop 3 lst1) (drop 2 lst2) (drop 1 lst3) lst4
 helperDiagonalUp (_:xs) = None
 
+blankBoard = replicate 7 (replicate 6 Empty)
+
+sampleBoard = [[Empty,Empty,Empty,Empty,Empty,Player Red],
+               [Empty,Empty,Empty,Empty,Empty,Player Yellow],
+               [Empty,Empty,Empty,Empty,Player Red,Player Red],
+               [Empty,Empty,Empty,Empty,Empty,Empty],
+               [Empty,Empty,Empty,Empty,Empty,Empty],
+               [Empty,Empty,Empty,Empty,Empty,Empty],
+               [Empty,Empty,Empty,Empty,Empty,Empty]]
