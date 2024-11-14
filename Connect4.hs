@@ -135,7 +135,7 @@ checkFourAcross :: [Position] -> [Position] -> [Position] -> [Position] -> Winne
 checkFourAcross (Player Red:_) (Player Red:_) (Player Red:_) (Player Red:_) = Winner Red
 checkFourAcross (Player Yellow:_) (Player Yellow:_) (Player Yellow:_) (Player Yellow:_) = Winner Yellow
 checkFourAcross (_:lst1) (_:lst2) (_:lst3) (_:lst4) = checkFourAcross lst1 lst2 lst3 lst4
-checkFourAcrosss _ _ _ _ = Ongoing
+checkFourAcross _ _ _ _ = Ongoing
 
 -- helper functions that checks if we have a winner
 orW :: Winner -> Winner -> Winner
