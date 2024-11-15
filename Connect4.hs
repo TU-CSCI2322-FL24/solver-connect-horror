@@ -116,7 +116,7 @@ wonGame board =
        else fullBoard board
 
 fullBoard :: Board -> Maybe Winner
-fullBoard board = if Ongoing `elem` [fullRow row | row <- board] then Just Ongoing else Just Tie
+fullBoard board = if Ongoing `elem` [fullRow row | row <- board] then Nothing else Just Tie
 
 fullRow :: [Position] -> Winner
 fullRow [] = Tie
@@ -173,3 +173,17 @@ sampleBoard = [[Empty,Empty,Empty,Player Red,Player Red,Player Red],
 sampleGameR = (Red, sampleBoard)
 sampleGameY = (Yellow, sampleBoard)
                --can be anyones turn, there is a winning move for red and yellow
+
+
+whoWillWin :: Game -> Winner
+whoWillWin (p, b) = aux (p, b)
+   where aux (p,b) = 
+          case containsWin potentialGames of [] -> aux map potentialGames
+                                          (Winner Red:xs) -> Winner Red
+                                          (Winner Yellow:xs) -> Winner Yellow
+                                          (Tie:xs) -> Tie
+          where potentialGames = [makeMove (p,b) move | move <- [1..7]]
+
+containsWin [Game] -> [Winner]
+containsWin games = catMaybes [wonGame game | game <- games]
+
