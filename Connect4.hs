@@ -102,7 +102,7 @@ spaceInCol (x:_) = x == Empty
 
 -- runs through all posibilities of vertical horizontal and diagonal win states, if any find a
 -- winner it is returned
-wonGame :: Board -> Winner
+wonGame :: Board -> Maybe Winner
 wonGame board =
     let vertical = [checkFourDown columns | columns <- board]
         horizontal = helperHorizontal board
@@ -110,13 +110,13 @@ wonGame board =
         diagonalUp = helperDiagonalUp board
         potentialWinner = (diagonalUp:diagonalDown:horizontal:vertical)
     in if Winner Yellow `elem` potentialWinner
-       then Winner Yellow
+       then Just Winner Yellow
        else if Winner Red `elem` potentialWinner
-       then Winner Red
+       then Just Winner Red
        else fullBoard board
 
-fullBoard :: Board -> Winner
-fullBoard board = if Ongoing `elem` [fullRow row | row <- board] then Ongoing else Tie
+fullBoard :: Board -> Maybe Winner
+fullBoard board = if Ongoing `elem` [fullRow row | row <- board] then Just Ongoing else Just Tie
 
 fullRow :: [Position] -> Winner
 fullRow [] = Tie
