@@ -1,3 +1,4 @@
+import Data.Maybe 
 
 --Data declaration
 
@@ -110,9 +111,9 @@ wonGame board =
         diagonalUp = helperDiagonalUp board
         potentialWinner = (diagonalUp:diagonalDown:horizontal:vertical)
     in if Winner Yellow `elem` potentialWinner
-       then Just Winner Yellow
+       then Just (Winner Yellow)
        else if Winner Red `elem` potentialWinner
-       then Just Winner Red
+       then Just (Winner Red)
        else fullBoard board
 
 fullBoard :: Board -> Maybe Winner
@@ -177,13 +178,15 @@ sampleGameY = (Yellow, sampleBoard)
 
 whoWillWin :: Game -> Winner
 whoWillWin (p, b) = aux (p, b)
-   where aux (p,b) = 
-          case containsWin potentialGames of [] -> aux map potentialGames
-                                          (Winner Red:xs) -> Winner Red
-                                          (Winner Yellow:xs) -> Winner Yellow
-                                          (Tie:xs) -> Tie
-          where potentialGames = [makeMove (p,b) move | move <- [1..7]]
+   where 
+     aux (p,b) =
+       let potentialGames = [makeMove (p,b) move | move <- [1..7]]
+       in case (containsWin potentialGames) of 
+               [] -> map aux potentialGames -- this returns a list of Winners and not a singular winner
+               (Winner Red:_) -> Winner Red
+               (Winner Yellow:_) -> Winner Yellow
+               (Tie:_) -> Tie
 
-containsWin [Game] -> [Winner]
-containsWin games = catMaybes [wonGame game | game <- games]
+containsWin :: [Game] -> [Winner]
+containsWin games = catMaybes [wonGame b | (p,b) <- games]
 
