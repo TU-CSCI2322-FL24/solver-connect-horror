@@ -175,17 +175,20 @@ sampleGameR = (Red, sampleBoard)
 sampleGameY = (Yellow, sampleBoard)
                --can be anyones turn, there is a winning move for red and yellow
 
-
+-- I think we need to change the data type for makeMove because instead of calling an error when a
+-- row is full, it should return something else otherwise whoWillWin will crash - it also makes
+-- sense to change it for general gameplay because if you make a mistake you dont want the whole
+-- game to crash you just want to tell the player they need to try again 
 whoWillWin :: Game -> Winner
 whoWillWin (p, b) = aux (p, b)
    where 
      aux (p,b) =
        let potentialGames = [makeMove (p,b) move | move <- [1..7]]
        in case (containsWin potentialGames) of 
-               [] -> map aux potentialGames -- this returns a list of Winners and not a singular winner
                (Winner Red:_) -> Winner Red
                (Winner Yellow:_) -> Winner Yellow
                (Tie:_) -> Tie
+               [] -> map aux potentialGames -- this is not compiling because this is returning a list and not a single winner
 
 containsWin :: [Game] -> [Winner]
 containsWin games = catMaybes [wonGame b | (p,b) <- games]
