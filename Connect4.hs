@@ -173,3 +173,19 @@ sampleBoard = [[Empty,Empty,Empty,Player Red,Player Red,Player Red],
 sampleGameR = (Red, sampleBoard)
 sampleGameY = (Yellow, sampleBoard)
                --can be anyones turn, there is a winning move for red and yellow
+
+readGame :: String -> Game
+readGame input = 
+    let 
+        columnList = lines input 
+        currentPlayer = head columnList
+        myBoard = [readHelper c | c <- columnList]
+    in (currentPlayer, myBoard)
+        
+readHelper :: [String] -> [Position]
+readHelper [] = null
+readHelper [x] = x
+readHelper (s:ss):
+    | s == "R"  = Player Red : readHelper ss
+    | s == "Y"  = Player Yellow : readHelper ss
+    | otherwise = Empty deriving (Eq, Show)
