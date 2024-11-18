@@ -3,17 +3,17 @@ import Data.Maybe
 --Data declaration
 
 --Player is the token color of each player, either Red or Yellow
-data Player = Red | Yellow deriving (Eq, Show)
+data Player = Red | Yellow deriving (Eq, Show, Ord)
 
 --Position is the value in each spot of the game boared, either a player token, or an empty space
-data Position = Player Player | Empty deriving (Eq, Show)
+data Position = Player Player | Empty deriving (Eq, Show, Ord)
 
 --Winner is either the Player and the set of moves they won with, or a tied board state where every slot is filled
 --and there is no winning set of moves
 --QUESTION: instead of having a tuple (Player, [Positions]), could we just have the winning player color?
 --          the set of positions could be complicated to grab, and I don't think we will even do anything with it
 --          its not like we have the cords stored to change anything in our output on a win
-data Winner = Winner Player | Tie | Ongoing deriving (Eq, Show)
+data Winner = Winner Player | Tie | Ongoing deriving (Eq, Show, Ord)
 
 --Type declaration
 --Move is the integer value of what column the move is trying to be placed in, should be in range 1-7 always
@@ -180,16 +180,29 @@ sampleGameY = (Yellow, sampleBoard)
 -- sense to change it for general gameplay because if you make a mistake you dont want the whole
 -- game to crash you just want to tell the player they need to try again 
 whoWillWin :: Game -> Winner
-whoWillWin (p, b) = aux (p, b)
-   where 
-     aux (p,b) =
-       let potentialGames = [makeMove (p,b) move | move <- [1..7]]
-       in case (containsWin potentialGames) of 
-               (Winner Red:_) -> Winner Red
-               (Winner Yellow:_) -> Winner Yellow
-               (Tie:_) -> Tie
-               [] -> map aux potentialGames -- this is not compiling because this is returning a list and not a single winner
-
-containsWin :: [Game] -> [Winner]
-containsWin games = catMaybes [wonGame b | (p,b) <- games]
+whoWillWin (p, b) = aux (p,b)
+   where
+     aux :: Game -> Winner
+     aux (Red,b) = 
+       let gameStatus = wonGame b
+       in if isJust gameStatus then fromJust gameStatus else
+             let potentialMoves = validMoves b
+                 potentialGames = [makeMove (p,b) move | move <- potentialMoves]
+                 listPotentialGames = map aux potentialGames
+             in if Winner Red `elem` listPotentialGames 
+                then Winner Red 
+                else if Tie `elem` listPotentialGames 
+                then Tie
+                else Winner Yellow
+     aux (Yellow,b) = 
+       let gameStatus = wonGame b
+       in if isJust gameStatus then fromJust gameStatus else
+             let potentialMoves = validMoves b
+                 potentialGames = [makeMove (p,b) move | move <- potentialMoves]
+                 listPotentialGames = map aux potentialGames
+             in if Winner Yellow `elem` listPotentialGames 
+                then Winner Yellow 
+                else if Tie `elem` listPotentialGames 
+                then Tie 
+                else Winner Red
 
