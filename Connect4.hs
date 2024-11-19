@@ -205,22 +205,16 @@ whoWillWin (p, b) = aux (p,b)
                 else if Tie `elem` listPotentialGames 
                 then Tie 
                 else Winner Red
-{-
-bestMove :: Game -> Move
-bestMove (Red, b) = 
-   let winner = whoWillWin (Red, b)
-       potentialMoves = validMoves b
-			 potentialGames = [(move, makeMove (p,b) move) | move <- potentialMoves]
-   in case winner of Winner Red -> aux potentialGames
-      where aux (Move, Game) -> (Move, Winner)
-            aux (move, game) =  
-                  let gameStatus = wonGame game
-									in if isJust gameStatus then (move, gameStatus) else
-                     let potentialMoves = validMoves b
-                         potentialGames = [(move, makeMove (p,b) move) | move <- potentialMoves]
-                         listPotentialGames = map aux potentialGames
-									in if 
--}
+                
+--showGame for Story 13
+showGame :: Game -> String
+showGame (Red, board) = unlines ("R":[showPosition c | c <- board])
+showGame (Yellow, board) = unlines ("Y":[showPosition c | c <- board])
+showPosition :: [Position] -> String
+showPosition [] = []
+showPosition (Empty:xs)         = 'E':showPosition xs
+showPosition (Player Red:xs)    = 'R':showPosition xs
+showPosition (Player Yellow:xs) = 'Y':showPosition xs
 
 bestMove :: Game -> Move
 bestMove (Red,b) = 
@@ -245,5 +239,3 @@ bestMove (Yellow,b) =
      else head moves
         where aux [] _ = error "something went wrong"
               aux ((move, winner):xs) key = if winner == key then move else aux xs key
-
-         
