@@ -205,8 +205,7 @@ whoWillWin (p, b) = aux (p,b)
                 else if Tie `elem` listPotentialGames 
                 then Tie 
                 else Winner Red
-
-
+                
 --showGame for Story 13
 showGame :: Game -> String
 showGame (Red, board) = unlines ("R":[showPosition c | c <- board])
@@ -216,3 +215,27 @@ showPosition [] = []
 showPosition (Empty:xs)         = 'E':showPosition xs
 showPosition (Player Red:xs)    = 'R':showPosition xs
 showPosition (Player Yellow:xs) = 'Y':showPosition xs
+
+bestMove :: Game -> Move
+bestMove (Red,b) = 
+  let moves = validMoves b
+      potentialWinners = [whoWillWin (makeMove (Red,b) move) | move <- moves]
+      assocList = zip moves potentialWinners
+  in if Winner Red `elem` potentialWinners 
+     then aux assocList (Winner Red)
+     else if Tie `elem` potentialWinners
+     then aux assocList Tie
+     else head moves
+        where aux [] _ = error "something went wrong"
+              aux ((move, winner):xs) key = if winner == key then move else aux xs key
+bestMove (Yellow,b) = 
+  let moves = validMoves b
+      potentialWinners = [whoWillWin (makeMove (Yellow,b) move) | move <- moves]
+      assocList = zip moves potentialWinners
+  in if Winner Yellow `elem` potentialWinners 
+     then aux assocList (Winner Yellow)
+     else if Tie `elem` potentialWinners
+     then aux assocList Tie
+     else head moves
+        where aux [] _ = error "something went wrong"
+              aux ((move, winner):xs) key = if winner == key then move else aux xs key
