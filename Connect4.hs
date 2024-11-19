@@ -205,4 +205,45 @@ whoWillWin (p, b) = aux (p,b)
                 else if Tie `elem` listPotentialGames 
                 then Tie 
                 else Winner Red
+{-
+bestMove :: Game -> Move
+bestMove (Red, b) = 
+   let winner = whoWillWin (Red, b)
+       potentialMoves = validMoves b
+			 potentialGames = [(move, makeMove (p,b) move) | move <- potentialMoves]
+   in case winner of Winner Red -> aux potentialGames
+      where aux (Move, Game) -> (Move, Winner)
+            aux (move, game) =  
+                  let gameStatus = wonGame game
+									in if isJust gameStatus then (move, gameStatus) else
+                     let potentialMoves = validMoves b
+                         potentialGames = [(move, makeMove (p,b) move) | move <- potentialMoves]
+                         listPotentialGames = map aux potentialGames
+									in if 
+-}
 
+bestMove :: Game -> Move
+bestMove (Red,b) = 
+  let moves = validMoves b
+      potentialWinners = [whoWillWin (makeMove (Red,b) move) | move <- moves]
+      assocList = zip moves potentialWinners
+  in if Winner Red `elem` potentialWinners 
+     then aux assocList (Winner Red)
+     else if Tie `elem` potentialWinners
+     then aux assocList Tie
+     else head moves
+        where aux [] _ = error "something went wrong"
+              aux ((move, winner):xs) key = if winner == key then move else aux xs key
+bestMove (Yellow,b) = 
+  let moves = validMoves b
+      potentialWinners = [whoWillWin (makeMove (Yellow,b) move) | move <- moves]
+      assocList = zip moves potentialWinners
+  in if Winner Yellow `elem` potentialWinners 
+     then aux assocList (Winner Yellow)
+     else if Tie `elem` potentialWinners
+     then aux assocList Tie
+     else head moves
+        where aux [] _ = error "something went wrong"
+              aux ((move, winner):xs) key = if winner == key then move else aux xs key
+
+         
