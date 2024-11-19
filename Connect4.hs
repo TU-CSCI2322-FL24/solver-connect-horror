@@ -206,3 +206,13 @@ whoWillWin (p, b) = aux (p,b)
                 then Tie 
                 else Winner Red
 
+
+--showGame for Story 13
+showGame :: Game -> String
+showGame (Red, board) = unlines ("R":[showPosition c | c <- board])
+showGame (Yellow, board) = unlines ("Y":[showPosition c | c <- board])
+showPosition :: [Position] -> String
+showPosition [] = []
+showPosition (Empty:xs)         = 'E':showPosition xs
+showPosition (Player Red:xs)    = 'R':showPosition xs
+showPosition (Player Yellow:xs) = 'Y':showPosition xs
