@@ -11,7 +11,6 @@ main =
    do args <- getArgs
       fName <- prompt "Enter a file name"
       -- contents <- readFile fName
-      loadGame fName
 
 prompt :: String -> IO String
 prompt str = 
@@ -25,3 +24,7 @@ loadGame file =
   do 
 	contents <- readFile file
 	return $ readGame contents
+
+putBestMove :: Game -> IO()
+putBestMove game = 
+   putStr $ show (bestMove game)
