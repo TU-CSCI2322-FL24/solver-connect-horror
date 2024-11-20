@@ -178,14 +178,18 @@ readGame :: String -> Game
 readGame input = 
     let 
         columnList = lines input 
-        currentPlayer = head columnList
+        currentPlayer = stringToPlayer (head columnList)
         myBoard = [readHelper c | c <- columnList]
     in (currentPlayer, myBoard)
         
-readHelper :: [String] -> [Position]
-readHelper [] = null
-readHelper [x] = x
-readHelper (s:ss):
-    | s == "R"  = Player Red : readHelper ss
-    | s == "Y"  = Player Yellow : readHelper ss
-    | otherwise = Empty deriving (Eq, Show)
+stringToPlayer :: String -> Player
+stringToPlayer  "R" = Red
+stringToPlayer "Y" = Yellow
+
+
+readHelper :: String -> [Position]
+readHelper [] = []
+readHelper (s:ss)
+    | s == 'R'  = Player Red : readHelper ss
+    | s == 'Y'  = Player Yellow : readHelper ss
+    | otherwise = Empty : readHelper ss
