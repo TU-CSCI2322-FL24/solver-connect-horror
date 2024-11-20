@@ -177,6 +177,27 @@ sampleGameR = (Red, sampleBoard)
 sampleGameY = (Yellow, sampleBoard)
                --can be anyones turn, there is a winning move for red and yellow
 
+
+readGame :: String -> Game
+readGame input = 
+    let 
+        columnList = lines input 
+        currentPlayer = stringToPlayer (head columnList)
+        myBoard = [readHelper c | c <- columnList]
+    in (currentPlayer, myBoard)
+        
+stringToPlayer :: String -> Player
+stringToPlayer  "R" = Red
+stringToPlayer "Y" = Yellow
+
+
+readHelper :: String -> [Position]
+readHelper [] = []
+readHelper (s:ss)
+    | s == 'R'  = Player Red : readHelper ss
+    | s == 'Y'  = Player Yellow : readHelper ss
+    | otherwise = Empty : readHelper ss
+
 -- I think we need to change the data type for makeMove because instead of calling an error when a
 -- row is full, it should return something else otherwise whoWillWin will crash - it also makes
 -- sense to change it for general gameplay because if you make a mistake you dont want the whole
@@ -241,3 +262,4 @@ bestMove (Yellow,b) =
      else head moves
         where aux [] _ = error "something went wrong"
               aux ((move, winner):xs) key = if winner == key then move else aux xs key
+
