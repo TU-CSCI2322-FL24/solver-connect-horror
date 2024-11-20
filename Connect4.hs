@@ -1,3 +1,5 @@
+module Connect4 where
+
 import Data.Maybe 
 
 --Data declaration
