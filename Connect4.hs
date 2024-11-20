@@ -1,18 +1,19 @@
+import Data.Maybe 
 
 --Data declaration
 
 --Player is the token color of each player, either Red or Yellow
-data Player = Red | Yellow deriving (Eq, Show)
+data Player = Red | Yellow deriving (Eq, Show, Ord)
 
 --Position is the value in each spot of the game boared, either a player token, or an empty space
-data Position = Player Player | Empty deriving (Eq, Show)
+data Position = Player Player | Empty deriving (Eq, Show, Ord)
 
 --Winner is either the Player and the set of moves they won with, or a tied board state where every slot is filled
 --and there is no winning set of moves
 --QUESTION: instead of having a tuple (Player, [Positions]), could we just have the winning player color?
 --          the set of positions could be complicated to grab, and I don't think we will even do anything with it
 --          its not like we have the cords stored to change anything in our output on a win
-data Winner = Winner Player | Tie | Ongoing deriving (Eq, Show)
+data Winner = Winner Player | Tie | Ongoing deriving (Eq, Show, Ord)
 
 --Type declaration
 --Move is the integer value of what column the move is trying to be placed in, should be in range 1-7 always
@@ -102,7 +103,7 @@ spaceInCol (x:_) = x == Empty
 
 -- runs through all posibilities of vertical horizontal and diagonal win states, if any find a
 -- winner it is returned
-wonGame :: Board -> Winner
+wonGame :: Board -> Maybe Winner
 wonGame board =
     let vertical = [checkFourDown columns | columns <- board]
         horizontal = helperHorizontal board
@@ -110,13 +111,13 @@ wonGame board =
         diagonalUp = helperDiagonalUp board
         potentialWinner = (diagonalUp:diagonalDown:horizontal:vertical)
     in if Winner Yellow `elem` potentialWinner
-       then Winner Yellow
+       then Just (Winner Yellow)
        else if Winner Red `elem` potentialWinner
-       then Winner Red
+       then Just (Winner Red)
        else fullBoard board
 
-fullBoard :: Board -> Winner
-fullBoard board = if Ongoing `elem` [fullRow row | row <- board] then Ongoing else Tie
+fullBoard :: Board -> Maybe Winner
+fullBoard board = if Ongoing `elem` [fullRow row | row <- board] then Nothing else Just Tie
 
 fullRow :: [Position] -> Winner
 fullRow [] = Tie
@@ -174,6 +175,7 @@ sampleGameR = (Red, sampleBoard)
 sampleGameY = (Yellow, sampleBoard)
                --can be anyones turn, there is a winning move for red and yellow
 
+
 readGame :: String -> Game
 readGame input = 
     let 
@@ -193,3 +195,69 @@ readHelper (s:ss)
     | s == 'R'  = Player Red : readHelper ss
     | s == 'Y'  = Player Yellow : readHelper ss
     | otherwise = Empty : readHelper ss
+
+-- I think we need to change the data type for makeMove because instead of calling an error when a
+-- row is full, it should return something else otherwise whoWillWin will crash - it also makes
+-- sense to change it for general gameplay because if you make a mistake you dont want the whole
+-- game to crash you just want to tell the player they need to try again 
+whoWillWin :: Game -> Winner
+whoWillWin (p, b) = aux (p,b)
+   where
+     aux :: Game -> Winner
+     aux (Red,b) = 
+       let gameStatus = wonGame b
+       in if isJust gameStatus then fromJust gameStatus else
+             let potentialMoves = validMoves b
+                 potentialGames = [makeMove (p,b) move | move <- potentialMoves]
+                 listPotentialGames = map aux potentialGames
+             in if Winner Red `elem` listPotentialGames 
+                then Winner Red 
+                else if Tie `elem` listPotentialGames 
+                then Tie
+                else Winner Yellow
+     aux (Yellow,b) = 
+       let gameStatus = wonGame b
+       in if isJust gameStatus then fromJust gameStatus else
+             let potentialMoves = validMoves b
+                 potentialGames = [makeMove (p,b) move | move <- potentialMoves]
+                 listPotentialGames = map aux potentialGames
+             in if Winner Yellow `elem` listPotentialGames 
+                then Winner Yellow 
+                else if Tie `elem` listPotentialGames 
+                then Tie 
+                else Winner Red
+                
+--showGame for Story 13
+showGame :: Game -> String
+showGame (Red, board) = unlines ("R":[showPosition c | c <- board])
+showGame (Yellow, board) = unlines ("Y":[showPosition c | c <- board])
+showPosition :: [Position] -> String
+showPosition [] = []
+showPosition (Empty:xs)         = 'E':showPosition xs
+showPosition (Player Red:xs)    = 'R':showPosition xs
+showPosition (Player Yellow:xs) = 'Y':showPosition xs
+
+bestMove :: Game -> Move
+bestMove (Red,b) = 
+  let moves = validMoves b
+      potentialWinners = [whoWillWin (makeMove (Red,b) move) | move <- moves]
+      assocList = zip moves potentialWinners
+  in if Winner Red `elem` potentialWinners 
+     then aux assocList (Winner Red)
+     else if Tie `elem` potentialWinners
+     then aux assocList Tie
+     else head moves
+        where aux [] _ = error "something went wrong"
+              aux ((move, winner):xs) key = if winner == key then move else aux xs key
+bestMove (Yellow,b) = 
+  let moves = validMoves b
+      potentialWinners = [whoWillWin (makeMove (Yellow,b) move) | move <- moves]
+      assocList = zip moves potentialWinners
+  in if Winner Yellow `elem` potentialWinners 
+     then aux assocList (Winner Yellow)
+     else if Tie `elem` potentialWinners
+     then aux assocList Tie
+     else head moves
+        where aux [] _ = error "something went wrong"
+              aux ((move, winner):xs) key = if winner == key then move else aux xs key
+
