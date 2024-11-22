@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Use fromMaybe" #-}
 module Connect4 where
 
 import Data.Maybe 
@@ -17,7 +19,7 @@ data Position = Player Player | Empty deriving (Eq, Show, Ord)
 --          its not like we have the cords stored to change anything in our output on a win
 data Winner = Winner Player | Tie | Ongoing deriving (Eq, Show, Ord)
 
---                                       Type declaration
+--                                       Type Declaration
 
 --Move is the integer value of what column the move is trying to be placed in, should be in range 1-7 always
 type Move = Int
@@ -195,8 +197,8 @@ whoWillWin (p, b) = aux (p,b)
                 then Tie 
                 else Winner Red
 
--- Takes a game and checks all the possible outcomes of the game and tells the player the best possible move
-bestMove :: Game -> Move
+-- Takes a game and checks all the possible outcomes of the game and tells the player the best possible move and the ourcome it gives
+bestMove :: Game -> (Move, Winner)
 bestMove (Red,b) = 
   let moves = validMoves b
       potentialWinners = [whoWillWin (makeMove (Red,b) move) | move <- moves]
@@ -205,9 +207,9 @@ bestMove (Red,b) =
      then aux assocList (Winner Red)
      else if Tie `elem` potentialWinners
      then aux assocList Tie
-     else head moves
+     else head assocList
         where aux [] _ = error "something went wrong"
-              aux ((move, winner):xs) key = if winner == key then move else aux xs key
+              aux ((move, winner):xs) key = if winner == key then (move, winner) else aux xs key
 bestMove (Yellow,b) = 
   let moves = validMoves b
       potentialWinners = [whoWillWin (makeMove (Yellow,b) move) | move <- moves]
@@ -216,16 +218,16 @@ bestMove (Yellow,b) =
      then aux assocList (Winner Yellow)
      else if Tie `elem` potentialWinners
      then aux assocList Tie
-     else head moves
+     else head assocList
         where aux [] _ = error "something went wrong"
-              aux ((move, winner):xs) key = if winner == key then move else aux xs key
+              aux ((move, winner):xs) key = if winner == key then (move, winner) else aux xs key
 
 readGame :: String -> Game
 readGame input = 
     let 
         columnList = lines input 
         currentPlayer = stringToPlayer (head columnList)
-        myBoard = [readHelper c | c <- columnList]
+        myBoard = [readHelper c | c <- tail columnList]
     in (currentPlayer, myBoard)
         
 stringToPlayer :: String -> Player

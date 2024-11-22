@@ -41,8 +41,9 @@ loadGame file =
 -- takes a game and returns the best move with the outcome
 putBestMove :: Game -> IO()
 putBestMove game =
-  let winner = winnerToString $ whoWillWin game
-  in putStr $ "\nThe best move is to place the piece in column " ++ show (bestMove game) ++ ". This will force a " ++ winner ++ ".\n"
+  let (move, winner) = bestMove game
+      winnerStr = winnerToString winner
+  in putStr $ "\nThe best move is to place the piece in column " ++ show move ++ ". This will force a " ++ winnerStr ++ ".\n"
 
 -- helper function to convert the winner data type to a string
 winnerToString :: Winner -> String
