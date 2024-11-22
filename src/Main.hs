@@ -14,7 +14,7 @@ main =
       fName <- prompt "Enter a file name"
       let fullPath = folderPath ++ "/" ++ fName
       game <- loadGame fullPath
-      putStr $ showGame game
+      putStrLn $ prettyPrint game
       putBestMove game
 
 -- helper function to ask for user input 
