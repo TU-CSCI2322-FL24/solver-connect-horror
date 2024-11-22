@@ -144,14 +144,18 @@ helperDiagonalUp (_:xs) = Ongoing
 -- NOTE: I got weird errors when trying to pattern match. Im leaving pattern match attempts incase we come back to it
 -- Call using the following format to split new lines in output:
 -- putStrLn (prettyPrint board)
-prettyPrint :: Board -> String
-prettyPrint [[]] = []--error "Game is empty"
-prettyPrint board
+
+prettyPrint :: Game -> String
+prettyPrint (player, board) = show player ++ "\n" ++ prettyPrintBoard board
+
+prettyPrintBoard :: Board -> String
+prettyPrintBoard [[]] = []--error "Game is empty"
+prettyPrintBoard board
     | null (head board) = error "You Lost your board"
     | length (head board) > 1 =
         let line = [head col | col <- board]
             remainder = [tail col | col <- board]
-        in prettyHelper line ++ "\n" ++ prettyPrint remainder
+        in prettyHelper line ++ "\n" ++ prettyPrintBoard remainder
     | length (head board) == 1 = prettyHelper [head col | col <- board]
     | otherwise = error "negative length list?? somehow??"
 -- OLD CODE: prettyPrint [(a:as), (b:bs), (c:cs), (d:ds), (e:es), (f:fs), (g:gs)] =
