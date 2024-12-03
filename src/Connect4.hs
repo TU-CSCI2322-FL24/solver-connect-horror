@@ -271,21 +271,21 @@ sampleGameR = (Red, sampleBoard)
 sampleGameY = (Yellow, sampleBoard)
                --can be anyones turn, there is a winning move for red and yellow
 
---                              Sprint 3
+--                                       Sprint 3
 
 type Rating = Int
 rateGame :: Game -> Rating
 rateGame (Red, board) =
    let vertical = sum [checkScoreDown columns 0 Red | columns <- board]
        horizontal = rateGameHorizontal board 0 Red
-			 diagonalDown = rateGameDiagonalDown board 0 Red
-       diagonalDown = rateGameDiagonalUp board 0 Red
+	   diagonalDown = rateGameDiagonalDown board 0 Red
+       diagonalUp = rateGameDiagonalUp board 0 Red
    in vertical + horizontal + diagonalDown + diagonalUp
 rateGame (Yellow, board) =
    let vertical = sum [checkScoreDown columns 0 Yellow | columns <- board]
        horizontal = rateGameHorizontal board 0 Yellow
-			 diagonalDown = rateGameDiagonalDown board 0 Yellow
-       diagonalDown = rateGameDiagonalUp board 0 Yellow
+	   diagonalDown = rateGameDiagonalDown board 0 Yellow
+       diagonalUp = rateGameDiagonalUp board 0 Yellow
    in vertical + horizontal + diagonalDown + diagonalUp
 
 checkScoreDown :: [Position] -> Rating -> Player -> Rating
@@ -307,24 +307,42 @@ rateGameHorizontal (lst1:lst2:lst3:lst4:xs) rating Red =
    let add = checkScoreAcross lst1 lst2 lst3 lst4 rating Red
    in rateGameHorizontal (lst2:lst3:lst4:xs) (rating+add) Red
 rateGameHorizontal (_:xs) rating _ = rating
+rateGameHorizontal (lst1:lst2:lst3:lst4:xs) rating Yellow = 
+   let add = checkScoreAcross lst1 lst2 lst3 lst4 rating Yellow
+   in rateGameHorizontal (lst2:lst3:lst4:xs) (rating+add) Yellow
 
 rateGameDiagonalDown :: [[Position]] -> Rating -> Player -> Rating
 rateGameDiagonalDown (lst1:lst2:lst3:lst4:xs) rating Red = 
    let add = checkScoreAcross lst1 (drop 1 lst2) (drop 2 lst3) (drop 3 lst4) rating Red
    in rateGameDiagonalDown (lst2:lst3:lst4:xs) (rating+add) Red
+rateGameDiagonalDown (lst1:lst2:lst3:lst4:xs) rating Yellow = 
+   let add = checkScoreAcross lst1 (drop 1 lst2) (drop 2 lst3) (drop 3 lst4) rating Yellow
+   in rateGameDiagonalDown (lst2:lst3:lst4:xs) (rating+add) Yellow
 rateGameDiagonalDown (_:xs) rating _ = rating
 
 rateGameDiagonalUp :: [[Position]] -> Rating -> Player -> Rating
 rateGameDiagonalUp (lst1:lst2:lst3:lst4:xs) rating Red = 
    let add = checkScoreAcross (drop 3 lst1) (drop 2 lst2) (drop 1 lst3) lst4 rating Red
    in rateGameDiagonalUp (lst2:lst3:lst4:xs) (rating+add) Red
+rateGameDiagonalUp (lst1:lst2:lst3:lst4:xs) rating Yellow = 
+   let add = checkScoreAcross (drop 3 lst1) (drop 2 lst2) (drop 1 lst3) lst4 rating Yellow
+   in rateGameDiagonalUp (lst2:lst3:lst4:xs) (rating+add) Yellow
 rateGameDiagonalUp (_:xs) rating _ = rating
 
 checkScoreAcross :: [Position] -> [Position] -> [Position] -> [Position] -> Rating -> Player -> Rating
+checkScoreAcross [] [] [] [] rating _ = rating
+checkScoreAcross [] _ _ _ rating _ = rating
+checkScoreAcross _ [] _ _ rating _ = rating
+checkScoreAcross _ _ [] _ rating _ = rating
+checkScoreAcross _ _ _ [] rating _ = rating
 checkScoreAcross (x1:xs1) (x2:xs2) (x3:xs3) (x4:xs4) rating Red = 
    let combined = [x1] ++ [x2] ++ [x3] ++ [x4]
        add = scoreChecker combined rating Red
    in checkScoreAcross xs1 xs2 xs3 xs4 (rating+add) Red
+checkScoreAcross (x1:xs1) (x2:xs2) (x3:xs3) (x4:xs4) rating Yellow = 
+   let combined = [x1] ++ [x2] ++ [x3] ++ [x4]
+       add = scoreChecker combined rating Yellow
+   in checkScoreAcross xs1 xs2 xs3 xs4 (rating+add) Yellow
 
 scoreChecker :: [Position] -> Rating -> Player -> Rating
 scoreChecker four rating Red =
