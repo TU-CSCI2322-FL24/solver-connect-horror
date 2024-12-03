@@ -281,13 +281,13 @@ rateGame :: Game -> Rating
 rateGame (Red, board) =
    let vertical = sum [checkScoreDown columns 0 Red | columns <- board]
        horizontal = rateGameHorizontal board 0 Red
-	   diagonalDown = rateGameDiagonalDown board 0 Red
+       diagonalDown = rateGameDiagonalDown board 0 Red
        diagonalUp = rateGameDiagonalUp board 0 Red
    in vertical + horizontal + diagonalDown + diagonalUp
 rateGame (Yellow, board) =
    let vertical = sum [checkScoreDown columns 0 Yellow | columns <- board]
        horizontal = rateGameHorizontal board 0 Yellow
-	   diagonalDown = rateGameDiagonalDown board 0 Yellow
+       diagonalDown = rateGameDiagonalDown board 0 Yellow
        diagonalUp = rateGameDiagonalUp board 0 Yellow
    in vertical + horizontal + diagonalDown + diagonalUp
 
@@ -311,12 +311,13 @@ rateGameHorizontal :: [[Position]] -> Rating -> Player -> Rating
 rateGameHorizontal (lst1:lst2:lst3:lst4:xs) rating Red = 
    let add = checkScoreAcross lst1 lst2 lst3 lst4 rating Red
    in rateGameHorizontal (lst2:lst3:lst4:xs) (rating+add) Red
-rateGameHorizontal (_:xs) rating _ = rating
 rateGameHorizontal (lst1:lst2:lst3:lst4:xs) rating Yellow = 
    let add = checkScoreAcross lst1 lst2 lst3 lst4 rating Yellow
    in rateGameHorizontal (lst2:lst3:lst4:xs) (rating+add) Yellow
    
 -- configures diagonal down rows to be passed into checkScoreAcross
+rateGameHorizontal (_:xs) rating _ = rating
+
 rateGameDiagonalDown :: [[Position]] -> Rating -> Player -> Rating
 rateGameDiagonalDown (lst1:lst2:lst3:lst4:xs) rating Red = 
    let add = checkScoreAcross lst1 (drop 1 lst2) (drop 2 lst3) (drop 3 lst4) rating Red
