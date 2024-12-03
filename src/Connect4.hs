@@ -122,7 +122,7 @@ orW :: Winner -> Winner -> Winner
 orW Ongoing w2 = w2
 orW w1 w2 = w1
 
---Ssends four horizontal pieces to checkFourAcross function
+--Sends four horizontal pieces to checkFourAcross function
 helperHorizontal :: [[Position]] -> Winner
 helperHorizontal (lst1:lst2:lst3:lst4:xs) = orW winner (helperHorizontal (lst2:lst3:lst4:xs))
    where winner = checkFourAcross lst1 lst2 lst3 lst4
@@ -270,3 +270,100 @@ sampleBoard = [[Empty,Empty,Empty,Player Red,Player Red,Player Red],
 sampleGameR = (Red, sampleBoard)
 sampleGameY = (Yellow, sampleBoard)
                --can be anyones turn, there is a winning move for red and yellow
+
+--                                       Sprint 3
+
+-- data type used for rating the state of a game
+type Rating = Int
+-- checks the score for the current player
+-- if current player is more likely to win the score is positive, otherwise it is negative
+rateGame :: Game -> Rating
+rateGame (Red, board) =
+   let vertical = sum [checkScoreDown columns 0 Red | columns <- board]
+       horizontal = rateGameHorizontal board 0 Red
+       diagonalDown = rateGameDiagonalDown board 0 Red
+       diagonalUp = rateGameDiagonalUp board 0 Red
+   in vertical + horizontal + diagonalDown + diagonalUp
+rateGame (Yellow, board) =
+   let vertical = sum [checkScoreDown columns 0 Yellow | columns <- board]
+       horizontal = rateGameHorizontal board 0 Yellow
+       diagonalDown = rateGameDiagonalDown board 0 Yellow
+       diagonalUp = rateGameDiagonalUp board 0 Yellow
+   in vertical + horizontal + diagonalDown + diagonalUp
+
+-- checks score for all the columns
+checkScoreDown :: [Position] -> Rating -> Player -> Rating
+checkScoreDown (x:xs) rating Red
+  | length (x:xs) >= 4 =
+       let four = take 4 (x:xs)
+           add = scoreChecker four rating Red 
+       in checkScoreDown xs (rating+add) Red
+  | otherwise = rating 
+checkScoreDown (x:xs) rating Yellow
+  | length (x:xs) >= 4 =
+       let four = take 4 (x:xs)
+           add = scoreChecker four rating Yellow
+       in checkScoreDown xs (rating+add) Yellow
+  | otherwise = rating 
+
+-- configures horizontal rows to be passed into checkScoreAcross
+rateGameHorizontal :: [[Position]] -> Rating -> Player -> Rating
+rateGameHorizontal (lst1:lst2:lst3:lst4:xs) rating Red = 
+   let add = checkScoreAcross lst1 lst2 lst3 lst4 rating Red
+   in rateGameHorizontal (lst2:lst3:lst4:xs) (rating+add) Red
+rateGameHorizontal (lst1:lst2:lst3:lst4:xs) rating Yellow = 
+   let add = checkScoreAcross lst1 lst2 lst3 lst4 rating Yellow
+   in rateGameHorizontal (lst2:lst3:lst4:xs) (rating+add) Yellow
+   
+-- configures diagonal down rows to be passed into checkScoreAcross
+rateGameHorizontal (_:xs) rating _ = rating
+
+rateGameDiagonalDown :: [[Position]] -> Rating -> Player -> Rating
+rateGameDiagonalDown (lst1:lst2:lst3:lst4:xs) rating Red = 
+   let add = checkScoreAcross lst1 (drop 1 lst2) (drop 2 lst3) (drop 3 lst4) rating Red
+   in rateGameDiagonalDown (lst2:lst3:lst4:xs) (rating+add) Red
+rateGameDiagonalDown (lst1:lst2:lst3:lst4:xs) rating Yellow = 
+   let add = checkScoreAcross lst1 (drop 1 lst2) (drop 2 lst3) (drop 3 lst4) rating Yellow
+   in rateGameDiagonalDown (lst2:lst3:lst4:xs) (rating+add) Yellow
+rateGameDiagonalDown (_:xs) rating _ = rating
+
+-- configures diagonal up rows to be passed into checkScoreAcross
+rateGameDiagonalUp :: [[Position]] -> Rating -> Player -> Rating
+rateGameDiagonalUp (lst1:lst2:lst3:lst4:xs) rating Red = 
+   let add = checkScoreAcross (drop 3 lst1) (drop 2 lst2) (drop 1 lst3) lst4 rating Red
+   in rateGameDiagonalUp (lst2:lst3:lst4:xs) (rating+add) Red
+rateGameDiagonalUp (lst1:lst2:lst3:lst4:xs) rating Yellow = 
+   let add = checkScoreAcross (drop 3 lst1) (drop 2 lst2) (drop 1 lst3) lst4 rating Yellow
+   in rateGameDiagonalUp (lst2:lst3:lst4:xs) (rating+add) Yellow
+rateGameDiagonalUp (_:xs) rating _ = rating
+
+-- calculates score of horizontal and diagonal wins
+checkScoreAcross :: [Position] -> [Position] -> [Position] -> [Position] -> Rating -> Player -> Rating
+checkScoreAcross [] [] [] [] rating _ = rating
+checkScoreAcross [] _ _ _ rating _ = rating
+checkScoreAcross _ [] _ _ rating _ = rating
+checkScoreAcross _ _ [] _ rating _ = rating
+checkScoreAcross _ _ _ [] rating _ = rating
+checkScoreAcross (x1:xs1) (x2:xs2) (x3:xs3) (x4:xs4) rating Red = 
+   let combined = [x1] ++ [x2] ++ [x3] ++ [x4]
+       add = scoreChecker combined rating Red
+   in checkScoreAcross xs1 xs2 xs3 xs4 (rating+add) Red
+checkScoreAcross (x1:xs1) (x2:xs2) (x3:xs3) (x4:xs4) rating Yellow = 
+   let combined = [x1] ++ [x2] ++ [x3] ++ [x4]
+       add = scoreChecker combined rating Yellow
+   in checkScoreAcross xs1 xs2 xs3 xs4 (rating+add) Yellow
+
+-- checks the score of any given set of 4 pieces
+scoreChecker :: [Position] -> Rating -> Player -> Rating
+scoreChecker four rating Red =
+   if Player Red `elem` four && not (Player Yellow `elem` four)
+   then 1
+   else if not (Player Red `elem` four) && Player Yellow `elem` four
+   then -1
+   else 0
+scoreChecker four rating Yellow = 
+   if Player Red `elem` four && not (Player Yellow `elem` four)
+   then -1
+   else if not (Player Red `elem` four) && Player Yellow `elem` four
+   then 1
+   else 0
