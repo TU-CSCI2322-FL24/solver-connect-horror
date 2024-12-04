@@ -6,10 +6,12 @@ import System.Environment
 import System.Directory
 import System.Console.GetOpt
 
-data Flag = NA deriving (Show,Eq)
+data Flag = Win | NA deriving (Show,Eq)
 
-options :: [OptDescr Flag]
-options = [Option ['n'] ["NA"] (NoArg NA) "Temp flag while empty"]
+options =
+    [ Option ['w'] ["win"] (NoArg Win) "Find the best move with exhaustive search (no cut-off depth)"
+    , Option ['n'] ["NA"] (NoArg NA) "Temp flag while empty"
+    ]
 
 -- asks for a file name and returns the game, the best move, and the outcome of that move
 main :: IO()
@@ -31,7 +33,9 @@ main =
           --putBestMove game
 
 dispatch flags game 
+  | Win `elem` flags = putBestMove game 
   | otherwise = putBestMove game
+  
 -- helper function to ask for user input 
 prompt :: String -> IO String
 prompt str =
