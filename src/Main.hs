@@ -5,12 +5,14 @@ import System.IO
 import System.Environment
 import System.Directory
 import System.Console.GetOpt
+import Data.Attoparsec.ByteString.Char8 (Number(D))
 
-data Flag = Win | NA deriving (Show,Eq)
+data Flag = Win | NA | Depth String deriving (Show,Eq)
 
 options =
     [ Option ['w'] ["win"] (NoArg Win) "Find the best move with exhaustive search (no cut-off depth)"
     , Option ['n'] ["NA"] (NoArg NA) "Temp flag while empty"
+    , Option ['d'] ["depth"] (ReqArg Depth "<num>") "Set AI foresight to <num>"
     ]
 
 -- asks for a file name and returns the game, the best move, and the outcome of that move
@@ -34,9 +36,25 @@ main =
           --putBestMove game
 
 dispatch flags game 
-  | Win `elem` flags = putBestMove game 
-  | otherwise = putBestMove game
+  | Win `elem` flags = putBestMove game 42
+  | any isNumber flags = putBestMove game (getNumber flags)
+  | otherwise = putBestMove game defaultDepth
   
+
+-- isNumber
+isNumber :: Flag -> Bool
+isNumber (Depth _) = True
+isNumber _ = False
+
+getNumber:: [Flag] -> Int
+getNumber [] = 10
+getNumber (Depth x:_) = read x
+getNumber (_:flags) = getNumber flags
+
+-- default num for depth
+defaultDepth :: Int
+defaultDepth = 10
+
 -- helper function to ask for user input 
 prompt :: String -> IO String
 prompt str =
@@ -59,11 +77,12 @@ loadGame file =
   return $ readGame contents
 
 -- takes a game and returns the best move with the outcome
-putBestMove :: Game -> IO()
-putBestMove game =
-  let (move, winner) = bestMove game
+putBestMove :: Game -> Int -> IO()
+putBestMove game depth =
+  let (move, winner) = bestMove game depth
       winnerStr = winnerToString winner
   in putStr $ "\nThe best move is to place the piece in column " ++ show move ++ ". This will force a " ++ winnerStr ++ ".\n"
+
 
 -- helper function to convert the winner data type to a string
 winnerToString :: Winner -> String
