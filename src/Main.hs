@@ -5,7 +5,6 @@ import System.IO
 import System.Environment
 import System.Directory
 import System.Console.GetOpt
-import Data.Attoparsec.ByteString.Char8 (Number(D))
 
 data Flag = Win | Help | Depth String deriving (Show,Eq)
 
@@ -36,9 +35,9 @@ main =
           --putBestMove game
 
 dispatch flags game 
-  | Win `elem` flags = putBestMove game 42
-  | any isNumber flags = putBestMove game (getNumber flags)
-  | otherwise = putBestMove game defaultDepth
+  | Win `elem` flags = putBestMove game
+  | any isNumber flags = putBestMove game --(getNumber flags)
+  | otherwise = putBestMove game
   
 
 -- isNumber
@@ -77,8 +76,8 @@ loadGame file =
   return $ readGame contents
 
 -- takes a game and returns the best move with the outcome
-putBestMove :: Game -> Int -> IO()
-putBestMove game depth =
+putBestMove :: Game -> IO()
+putBestMove game =
   let (move, winner) = bestMove game
       winnerStr = winnerToString winner
   in putStr $ "\nThe best move is to place the piece in column " ++ show move ++ ". This will force a " ++ winnerStr ++ ".\n"

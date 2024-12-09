@@ -210,7 +210,7 @@ bestMove (Red,b) =
   in if Winner Red `elem` potentialWinners 
      then aux assocList (Winner Red)
      else if Tie `elem` potentialWinners
-     then aux assocList Tie 
+     then aux assocList Tie
      else head assocList
         where aux [] _ = error "something went wrong"
               aux ((move, winner):xs) key = if winner == key then (move, winner) else aux xs key
