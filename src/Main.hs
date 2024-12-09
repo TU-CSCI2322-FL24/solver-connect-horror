@@ -6,11 +6,11 @@ import System.Environment
 import System.Directory
 import System.Console.GetOpt
 
-data Flag = Win | NA | Depth String deriving (Show,Eq)
+data Flag = Win | Help | Depth String deriving (Show,Eq)
 
 options =
     [ Option ['w'] ["win"] (NoArg Win) "Find the best move with exhaustive search (no cut-off depth)"
-    , Option ['n'] ["NA"] (NoArg NA) "Temp flag while empty"
+    , Option ['h'] ["help"] (NoArg Help) "Print usage information and exit"
     , Option ['d'] ["depth"] (ReqArg Depth "<num>") "Set AI foresight to <num>"
     ]
 
@@ -20,8 +20,8 @@ main =
    do args <- getArgs
       let (flags,inputs,errors) = getOpt Permute options args
       putStrLn $ show (flags,inputs,errors)
-      if NA `elem` flags
-      then print "temp placeholder"
+      if Help `elem` flags
+      then putStrLn $ usageInfo "Connect4 [options] [filename] Connect 4 Solver." options
       else
         do
           -- chatGPT used to help with putting folders in the right place and getting correct path
