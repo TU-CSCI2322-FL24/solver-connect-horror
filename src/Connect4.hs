@@ -202,29 +202,29 @@ whoWillWin (p, b) = aux (p,b)
                 else Winner Red
 
 -- Takes a game and checks all the possible outcomes of the game and tells the player the best possible move and the ourcome it gives
-bestMove :: Game -> Int -> (Move, Winner)
-bestMove (Red,b) depth = 
+bestMove :: Game -> (Move, Winner)
+bestMove (Red,b) = 
   let moves = validMoves b
       potentialWinners = [whoWillWin (makeMove (Red,b) move) | move <- moves]
       assocList = zip moves potentialWinners
   in if Winner Red `elem` potentialWinners 
-     then aux assocList (Winner Red) depth
+     then aux assocList (Winner Red)
      else if Tie `elem` potentialWinners
-     then aux assocList Tie depth
+     then aux assocList Tie
      else head assocList
-        where aux [] _ _= error "something went wrong"
-              aux ((move, winner):xs) key depth = if winner == key then (move, winner) else aux xs key depth - 1
-bestMove (Yellow,b) depth = 
+        where aux [] _ = error "something went wrong"
+              aux ((move, winner):xs) key = if winner == key then (move, winner) else aux xs key
+bestMove (Yellow,b) = 
   let moves = validMoves b
       potentialWinners = [whoWillWin (makeMove (Yellow,b) move) | move <- moves]
       assocList = zip moves potentialWinners
   in if Winner Yellow `elem` potentialWinners 
-     then aux assocList (Winner Yellow) depth
+     then aux assocList (Winner Yellow)
      else if Tie `elem` potentialWinners
-     then aux assocList Tie depth
+     then aux assocList Tie
      else head assocList
-        where aux [] _ _ = error "something went wrong"
-              aux ((move, winner):xs) key depth = if winner == key then (move, winner) else aux xs key depth - 1
+        where aux [] _ = error "something went wrong"
+              aux ((move, winner):xs) key = if winner == key then (move, winner) else aux xs key
 
 readGame :: String -> Game
 readGame input = 
