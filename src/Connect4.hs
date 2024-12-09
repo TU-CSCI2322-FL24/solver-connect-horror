@@ -3,6 +3,7 @@
 module Connect4 where
 
 import Data.Maybe 
+import Debug.Trace
 
 --                                       Data Declaration
 
@@ -37,26 +38,22 @@ type Game = (Player, Board)
 type Board = [[Position]]
 
 --                                       Sprint 1
+-- Helper function that returns the opponent of the player
+opponent :: Player -> Player
+opponent Red = Yellow
+opponent Yellow = Red
 
 -- Make move takes in a game, a move the player is attempting to make, and returns the new game on the other
 -- players turn with that player's move if it was valid. currently throws an error if move is out of bounds,
 -- but for some reason the error doesn't show until the new board is attempted to be printed
 makeMove :: Game -> Move -> Game
-makeMove (Red, board) move 
+makeMove (p, board) move 
   | checkMove board move = 
       let (pre, col:after) = splitAt (move-1) board
           lengthEmpty = length [space | space <- col, space == Empty]
           (empty, _:tokens) = splitAt (lengthEmpty-1) col
-          newCol = empty ++ Player Red:tokens
-      in (Yellow, pre ++ newCol:after)
-  | otherwise = error "Invalid Move"
-makeMove (Yellow, board) move 
-  | checkMove board move = 
-      let (pre, col:after) = splitAt (move-1) board
-          lengthEmpty = length [space | space <- col, space == Empty]
-          (empty, _:tokens) = splitAt (lengthEmpty-1) col
-          newCol = empty ++ Player Yellow:tokens
-      in (Red, pre ++ newCol:after)
+          newCol = empty ++ Player p:tokens
+      in (opponent p, pre ++ newCol:after)
   | otherwise = error "Invalid Move"
 
 -- Indexing for board positions with this code starts at 1, i.e. 
@@ -175,56 +172,34 @@ prettyHelper (x:xs)
 
 -- Takes a game and determines the best outcome for the current player
 whoWillWin :: Game -> Winner
-whoWillWin (p, b) = aux (p,b)
-   where
-     aux :: Game -> Winner
-     aux (Red,b) = 
-       let gameStatus = wonGame b
-       in if isJust gameStatus then fromJust gameStatus else
-             let potentialMoves = validMoves b
-                 potentialGames = [makeMove (p,b) move | move <- potentialMoves]
-                 listPotentialGames = map aux potentialGames
-             in if Winner Red `elem` listPotentialGames 
-                then Winner Red 
-                else if Tie `elem` listPotentialGames 
-                then Tie
-                else Winner Yellow
-     aux (Yellow,b) = 
-       let gameStatus = wonGame b
-       in if isJust gameStatus then fromJust gameStatus else
-             let potentialMoves = validMoves b
-                 potentialGames = [makeMove (p,b) move | move <- potentialMoves]
-                 listPotentialGames = map aux potentialGames
-             in if Winner Yellow `elem` listPotentialGames 
-                then Winner Yellow 
-                else if Tie `elem` listPotentialGames 
-                then Tie 
-                else Winner Red
+whoWillWin (p,b) = 
+ case wonGame b of
+     Just gameStatus -> gameStatus
+     Nothing -> 
+       let potentialMoves = validMoves b
+           potentialGames = [makeMove (p,b) move | move <- potentialMoves]
+           listPotentialGames = map whoWillWin potentialGames
+       in if Winner p `elem` listPotentialGames 
+          then Winner p 
+          else if Tie `elem` listPotentialGames 
+          then Tie
+          else Winner $ opponent p
 
--- Takes a game and checks all the possible outcomes of the game and tells the player the best possible move and the ourcome it gives
-bestMove :: Game -> (Move, Winner)
-bestMove (Red,b) = 
-  let moves = validMoves b
-      potentialWinners = [whoWillWin (makeMove (Red,b) move) | move <- moves]
-      assocList = zip moves potentialWinners
-  in if Winner Red `elem` potentialWinners 
-     then aux assocList (Winner Red)
-     else if Tie `elem` potentialWinners
-     then aux assocList Tie
-     else head assocList
-        where aux [] _ = error "something went wrong"
-              aux ((move, winner):xs) key = if winner == key then (move, winner) else aux xs key
-bestMove (Yellow,b) = 
-  let moves = validMoves b
-      potentialWinners = [whoWillWin (makeMove (Yellow,b) move) | move <- moves]
-      assocList = zip moves potentialWinners
-  in if Winner Yellow `elem` potentialWinners 
-     then aux assocList (Winner Yellow)
-     else if Tie `elem` potentialWinners
-     then aux assocList Tie
-     else head assocList
-        where aux [] _ = error "something went wrong"
-              aux ((move, winner):xs) key = if winner == key then (move, winner) else aux xs key
+-- Takes a game and checks all the possible outcomes of the game and tells the player the best possible move and the outcome it gives
+bestMove :: Game -> (Maybe Move, Winner)
+bestMove (p,b) = 
+  case wonGame b of
+    Just gameStatus -> (Nothing, gameStatus)
+    Nothing -> 
+      let moves = validMoves b
+          potentialWinners = [(Just move, whoWillWin (makeMove (p,b) move)) | move <- moves]
+      in if any (\(m,w) -> w == Winner p) potentialWinners
+         then aux potentialWinners (Winner p)
+         else if any (\(m,w) -> w == Tie) potentialWinners
+         then aux potentialWinners Tie
+         else (Nothing, Winner $ opponent p)
+            where aux [] _ = error "something went wrong"
+                  aux ((Just move, winner):xs) key = if winner == key then (Just move, winner) else aux xs key
 
 readGame :: String -> Game
 readGame input = 
@@ -276,68 +251,113 @@ sampleGameY = (Yellow, sampleBoard)
 -- data type used for rating the state of a game
 type Rating = Int
 -- checks the score for the current player
--- if current player is more likely to win the score is positive, otherwise it is negative
+-- if yellow is more likely to win the score is positive, if red is more likely to win it is negative
 rateGame :: Game -> Rating
-rateGame (player, board) =
-   let vertical = sum [checkScoreDown columns 0 player | columns <- board]
-       horizontal = rateGameHorizontal board 0 player
-       diagonalDown = rateGameDiagonalDown board 0 player
-       diagonalUp = rateGameDiagonalUp board 0 player
-   in vertical + horizontal + diagonalDown + diagonalUp
+rateGame (player, board) = 
+  case wonGame board of
+    Just gameStatus -> 
+      if      gameStatus == Winner Yellow then 2000
+      else if gameStatus == Winner Red    then -2000
+      else 0
+    Nothing -> 
+      let vertical = sum [checkScoreDown columns | columns <- board]
+          horizontal = rateGameHorizontal board
+          diagonalDown = rateGameDiagonalDown board
+          diagonalUp = rateGameDiagonalUp board
+      in vertical + horizontal + diagonalDown + diagonalUp
 
 -- checks score for all the columns
-checkScoreDown :: [Position] -> Rating -> Player -> Rating
-checkScoreDown (x:xs) rating player
+checkScoreDown :: [Position] -> Rating
+checkScoreDown (x:xs)
   | length (x:xs) >= 4 =
        let four = take 4 (x:xs)
-           add = scoreChecker four rating player 
-       in checkScoreDown xs (rating+add) player
-  | otherwise = rating 
+           rateFour = scoreChecker four
+       in rateFour + checkScoreDown xs
+  | otherwise = 0
 
 -- configures horizontal rows to be passed into checkScoreAcross
-rateGameHorizontal :: [[Position]] -> Rating -> Player -> Rating
-rateGameHorizontal (lst1:lst2:lst3:lst4:xs) rating player = 
-   let add = checkScoreAcross lst1 lst2 lst3 lst4 rating player
-   in rateGameHorizontal (lst2:lst3:lst4:xs) (rating+add) player 
-rateGameHorizontal (_:xs) rating _ = rating
+rateGameHorizontal :: [[Position]] -> Rating
+rateGameHorizontal (lst1:lst2:lst3:lst4:xs) = 
+   let rateFour = checkScoreAcross lst1 lst2 lst3 lst4
+   in rateFour + rateGameHorizontal (lst2:lst3:lst4:xs)
+rateGameHorizontal (_:xs) = 0
 
 -- configures diagonal down rows to be passed into checkScoreAcross
-rateGameDiagonalDown :: [[Position]] -> Rating -> Player -> Rating
-rateGameDiagonalDown (lst1:lst2:lst3:lst4:xs) rating player = 
-   let add = checkScoreAcross lst1 (drop 1 lst2) (drop 2 lst3) (drop 3 lst4) rating player
-   in rateGameDiagonalDown (lst2:lst3:lst4:xs) (rating+add) player
-rateGameDiagonalDown (_:xs) rating _ = rating
+rateGameDiagonalDown :: [[Position]] -> Rating
+rateGameDiagonalDown (lst1:lst2:lst3:lst4:xs) = 
+   let rateFour = checkScoreAcross lst1 (drop 1 lst2) (drop 2 lst3) (drop 3 lst4)
+   in rateFour + rateGameDiagonalDown (lst2:lst3:lst4:xs)
+rateGameDiagonalDown (_:xs) = 0
 
 -- configures diagonal up rows to be passed into checkScoreAcross
-rateGameDiagonalUp :: [[Position]] -> Rating -> Player -> Rating
-rateGameDiagonalUp (lst1:lst2:lst3:lst4:xs) rating player = 
-   let add = checkScoreAcross (drop 3 lst1) (drop 2 lst2) (drop 1 lst3) lst4 rating player
-   in rateGameDiagonalUp (lst2:lst3:lst4:xs) (rating+add) player
-rateGameDiagonalUp (_:xs) rating _ = rating
+rateGameDiagonalUp :: [[Position]] -> Rating
+rateGameDiagonalUp (lst1:lst2:lst3:lst4:xs) = 
+   let rateFour = checkScoreAcross (drop 3 lst1) (drop 2 lst2) (drop 1 lst3) lst4
+   in rateFour + rateGameDiagonalUp (lst2:lst3:lst4:xs)
+rateGameDiagonalUp (_:xs) = 0
 
 -- calculates score of horizontal and diagonal wins
-checkScoreAcross :: [Position] -> [Position] -> [Position] -> [Position] -> Rating -> Player -> Rating
-checkScoreAcross [] [] [] [] rating _ = rating
-checkScoreAcross [] _ _ _ rating _ = rating
-checkScoreAcross _ [] _ _ rating _ = rating
-checkScoreAcross _ _ [] _ rating _ = rating
-checkScoreAcross _ _ _ [] rating _ = rating
-checkScoreAcross (x1:xs1) (x2:xs2) (x3:xs3) (x4:xs4) rating player = 
-   let combined = [x1] ++ [x2] ++ [x3] ++ [x4]
-       add = scoreChecker combined rating player
-   in checkScoreAcross xs1 xs2 xs3 xs4 (rating+add) player
+checkScoreAcross :: [Position] -> [Position] -> [Position] -> [Position] -> Rating
+checkScoreAcross [] [] [] [] = 0
+checkScoreAcross [] _ _ _ = 0
+checkScoreAcross _ [] _ _ = 0
+checkScoreAcross _ _ [] _ = 0
+checkScoreAcross _ _ _ [] = 0
+checkScoreAcross (x1:xs1) (x2:xs2) (x3:xs3) (x4:xs4) = 
+   let four = [x1] ++ [x2] ++ [x3] ++ [x4]
+       rateFour = scoreChecker four
+   in rateFour + checkScoreAcross xs1 xs2 xs3 xs4
 
--- checks the score of any given set of 4 pieces
-scoreChecker :: [Position] -> Rating -> Player -> Rating
-scoreChecker four rating Red =
-   if Player Red `elem` four && not (Player Yellow `elem` four)
-   then 1
-   else if not (Player Red `elem` four) && Player Yellow `elem` four
-   then -1
-   else 0
-scoreChecker four rating Yellow = 
+-- checks the score of any given set of 4 pieces, positive scores are for player yellow
+-- and negative scores are for player red
+scoreChecker :: [Position] -> Rating
+scoreChecker four =
    if Player Red `elem` four && not (Player Yellow `elem` four)
    then -1
    else if not (Player Red `elem` four) && Player Yellow `elem` four
    then 1
    else 0
+
+-- looks through the game until a certain depth and returns the best rating of the board for
+-- for that player and the move the current player should make 
+whoMightWin :: Game -> Int -> (Rating, Maybe Move)
+whoMightWin (p, b) depth 
+  | depth < 0  = error "invalid input"
+  | depth == 0 = (rateGame (p,b), Nothing) 
+  | otherwise =
+    case wonGame b of
+      Just gameStatus -> 
+        if      gameStatus == Winner Yellow then (2000, Nothing)
+        else if gameStatus == Winner Red    then (-2000, Nothing)
+        else (0, Nothing)
+      Nothing -> 
+        let potentialMoves = validMoves b
+            potentialGames = [(makeMove (p,b) move, Just move) | move <- potentialMoves]
+            ratingsList = map (\(game, move) -> (fst $ whoMightWin game (depth-1), move)) potentialGames
+        in if p == Yellow
+           then maximum ratingsList --maximumOptim potentialGames depth
+           else minimum ratingsList --minimumOptim potentialGames depth
+{-
+maximumOptim :: [(Game, Maybe Move)] -> Int -> (Rating, Maybe Move)
+maximumOptim [] depth = (-2000, Nothing)
+maximumOptim ((game, move):xs) depth = 
+  let result = whoMightWin game (depth-1)
+  in if fst result == 2000 then (fst result, move) else max (fst result, move) (maximumOptim xs depth)
+
+minimumOptim :: [(Game, Maybe Move)] -> Int -> (Rating, Maybe Move)
+minimumOptim [] depth = (2000, Nothing)
+minimumOptim ((game, move):xs) depth = 
+  let result = whoMightWin game (depth-1)
+  in if fst result == -2000 then (fst result, move) else min (fst result, move) (minimumOptim xs depth)
+-}
+
+sampleBoard2 = [[Empty,Empty,Empty,Empty,Player Red,Player Red],
+               [Empty,Empty,Empty,Empty,Empty,Player Yellow],
+               [Player Red,Player Red,Player Yellow,Player Yellow,Player Red,Player Red],
+               [Empty,Empty,Empty,Empty,Player Yellow,Player Yellow],
+               [Empty,Empty,Empty,Empty,Empty,Empty],
+               [Empty,Player Yellow,Player Yellow,Player Red,Player Red,Player Yellow],
+               [Empty,Empty,Empty,Player Red, Player Red, Player Red]]
+
+sampleGameY2 = (Yellow, sampleBoard2)
+sampleGameR2 = (Red, sampleBoard2)
