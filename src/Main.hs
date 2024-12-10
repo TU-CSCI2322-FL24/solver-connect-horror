@@ -33,7 +33,7 @@ main =
         do
           -- chatGPT used to help with putting folders in the right place and getting correct path
           let folderPath = "../testFiles"
-              fName = head inputs
+              fName = if null inputs then "BlankBoard.txt" else head inputs
           --fName <- prompt "Enter a file name"
           let fullPath = folderPath ++ "/" ++ fName
           game <- loadGame fullPath
