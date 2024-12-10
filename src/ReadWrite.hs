@@ -1,6 +1,6 @@
 module ReadWrite where
 
-import Connect4_n
+import Connect4
 
 -- Takes a game and converts it to a string, Currently using list comprehension cause
 -- NOTE: I got weird errors when trying to pattern match. Im leaving pattern match attempts incase we come back to it

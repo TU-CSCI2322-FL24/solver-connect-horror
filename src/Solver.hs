@@ -1,6 +1,6 @@
 module Solver where
 
-import Connect4_n
+import Connect4
 
 -- Takes a game and determines the best outcome for the current player
 whoWillWin :: Game -> Winner
