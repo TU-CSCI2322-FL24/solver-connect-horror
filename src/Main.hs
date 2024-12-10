@@ -32,7 +32,7 @@ main =
       else
         do
           -- chatGPT used to help with putting folders in the right place and getting correct path
-          let folderPath = "../testFiles"
+          let folderPath = "./testFiles"
               fName = if null inputs then "BlankBoard.txt" else head inputs
           --fName <- prompt "Enter a file name"
           let fullPath = folderPath ++ "/" ++ fName
@@ -111,8 +111,8 @@ putBestMove game depth v =
       move = fromMaybe (-1) mMove
   in if move == (-1) 
      then putStr "\n invalid move error\n"
-     else if v then putStrLn $ prettyPrint game ++ "\nThe best move is to plave the piece in column " ++ show move ++ ". This will put the board in favor of " ++ decipherRating rating ++ "."
-               else putStrLn $ "The best move is to plave the piece in column " ++ show move ++ ". This will put the board in favor of " ++ decipherRating rating ++ "."
+     else if v then putStrLn $ prettyPrint game ++ "\nThe best move is to place the piece in column " ++ show move ++ ". This will put the board in favor of " ++ decipherRating rating ++ "."
+               else putStrLn $ "The best move is to place the piece in column " ++ show move ++ ". This will put the board in favor of " ++ decipherRating rating ++ "."
 
 decipherRating :: Rating -> String
 decipherRating rating 
