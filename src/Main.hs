@@ -1,5 +1,7 @@
 module Main where
 
+import Solver
+import ReadWrite
 import Connect4
 import System.IO
 import System.Environment
