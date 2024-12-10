@@ -192,14 +192,11 @@ bestMove (p,b) =
     Just gameStatus -> (Nothing, gameStatus)
     Nothing -> 
       let moves = validMoves b
-          potentialWinners = [(Just move, whoWillWin (makeMove (p,b) move)) | move <- moves]
-      in if any (\(m,w) -> w == Winner p) potentialWinners
-         then aux potentialWinners (Winner p)
-         else if any (\(m,w) -> w == Tie) potentialWinners
-         then aux potentialWinners Tie
-         else (Nothing, Winner $ opponent p)
-            where aux [] _ = error "something went wrong"
-                  aux ((Just move, winner):xs) key = if winner == key then (Just move, winner) else aux xs key
+          potentialWinners = [(whoWillWin (makeMove (p,b) move), move) | move <- moves]
+      in case (lookup (Winner p) potentialWinners, lookup Tie potentialWinners, potentialWinners) of
+              (Just m, _, _) -> (Just m, Winner p)
+              (Nothing, Just m, _) -> (Just m, Tie)
+              (Nothing, Nothing, (loss, move):_) -> (Just move, loss)
 
 readGame :: String -> Game
 readGame input = 
@@ -255,16 +252,15 @@ type Rating = Int
 rateGame :: Game -> Rating
 rateGame (player, board) = 
   case wonGame board of
-    Just gameStatus -> 
-      if      gameStatus == Winner Yellow then 2000
-      else if gameStatus == Winner Red    then -2000
-      else 0
-    Nothing -> 
-      let vertical = sum [checkScoreDown columns | columns <- board]
-          horizontal = rateGameHorizontal board
-          diagonalDown = rateGameDiagonalDown board
-          diagonalUp = rateGameDiagonalUp board
-      in vertical + horizontal + diagonalDown + diagonalUp
+       Just (Winner Yellow) -> 2000 
+       Just (Winner Red)    -> -2000
+       Just Tie             -> 0 
+       Nothing -> 
+        let vertical = sum [checkScoreDown columns | columns <- board]
+            horizontal = rateGameHorizontal board
+            diagonalDown = rateGameDiagonalDown board
+            diagonalUp = rateGameDiagonalUp board
+        in vertical + horizontal + diagonalDown + diagonalUp
 
 -- checks score for all the columns
 checkScoreDown :: [Position] -> Rating
@@ -326,30 +322,27 @@ whoMightWin (p, b) depth
   | depth == 0 = (rateGame (p,b), Nothing) 
   | otherwise =
     case wonGame b of
-      Just gameStatus -> 
-        if      gameStatus == Winner Yellow then (2000, Nothing)
-        else if gameStatus == Winner Red    then (-2000, Nothing)
-        else (0, Nothing)
+      Just (Winner Yellow) -> (2000, Nothing) 
+      Just (Winner Red)    -> (-2000, Nothing) 
+      Just Tie             -> (0, Nothing) 
       Nothing -> 
         let potentialMoves = validMoves b
             potentialGames = [(makeMove (p,b) move, Just move) | move <- potentialMoves]
-            ratingsList = map (\(game, move) -> (fst $ whoMightWin game (depth-1), move)) potentialGames
         in if p == Yellow
-           then maximum ratingsList --maximumOptim potentialGames depth
-           else minimum ratingsList --minimumOptim potentialGames depth
-{-
+           then maximumOptim potentialGames depth
+           else minimumOptim potentialGames depth
+
 maximumOptim :: [(Game, Maybe Move)] -> Int -> (Rating, Maybe Move)
-maximumOptim [] depth = (-2000, Nothing)
+maximumOptim [(game, move)] depth = (rateGame game, move)
 maximumOptim ((game, move):xs) depth = 
   let result = whoMightWin game (depth-1)
   in if fst result == 2000 then (fst result, move) else max (fst result, move) (maximumOptim xs depth)
 
 minimumOptim :: [(Game, Maybe Move)] -> Int -> (Rating, Maybe Move)
-minimumOptim [] depth = (2000, Nothing)
+minimumOptim [(game, move)] depth = (rateGame game, move)
 minimumOptim ((game, move):xs) depth = 
   let result = whoMightWin game (depth-1)
   in if fst result == -2000 then (fst result, move) else min (fst result, move) (minimumOptim xs depth)
--}
 
 sampleBoard2 = [[Empty,Empty,Empty,Empty,Player Red,Player Red],
                [Empty,Empty,Empty,Empty,Empty,Player Yellow],
