@@ -6,8 +6,9 @@ import System.Environment
 import System.Directory
 import System.Console.GetOpt
 import Data.Maybe
+import Text.Read
 
-data Flag = Win | Help | Depth String| Move String | Verbose deriving (Show,Eq)
+data Flag = Win | Help | Depth String| Move String | Verbose | Interactive deriving (Show,Eq)
 
 options =
     [ Option ['w'] ["win"] (NoArg Win) "Find the best move with exhaustive search (no cut-off depth)"
@@ -15,6 +16,7 @@ options =
     , Option ['d'] ["depth"] (ReqArg Depth "<num>") "Set AI foresight to <num>"
     , Option ['m'] ["move"] (ReqArg Move "<num>") "Make a move on column <num> and print out the new board"
     , Option ['v'] ["verbose"] (NoArg Verbose) "Print with more information"
+    , Option ['i'] ["interactive"] (NoArg Interactive) "Play a game against the computer"
     ]
 
 -- asks for a file name and returns the game, the best move, and the outcome of that move
@@ -41,6 +43,13 @@ dispatch flags game
   | Win `elem` flags = if Verbose `elem` flags then moveToEnd game True else moveToEnd game False
   | any isDepth flags = if Verbose `elem` flags then putBestMove game (getDepth flags) True else putBestMove game (getDepth flags) False
   | any isMove flags = if Verbose `elem` flags then putMove game (getMove flags) True else putMove game (getMove flags) False
+  | Interactive `elem` flags = if Verbose `elem` flags 
+                               then if any isDepth flags 
+                                    then playGame game (getDepth flags) True 
+                                    else playGame game defaultDepth True
+                               else if any isDepth flags 
+                                    then playGame game (getDepth flags) False
+                                    else playGame game defaultDepth False
   | otherwise = if Verbose `elem` flags then putBestMove game defaultDepth True else putBestMove game defaultDepth False
   
 
@@ -66,7 +75,7 @@ getDepth (_:flags) = getDepth flags
 
 -- default num for depth
 defaultDepth :: Int
-defaultDepth = 10
+defaultDepth = 5
 
 -- helper function to ask for user input 
 prompt :: String -> IO String
@@ -120,6 +129,50 @@ moveToEnd game v =
           then putStrLn $ prettyPrint game ++ "\nThe best move is to place the piece in column " ++ show move ++ ". This will force a " ++ winnerStr ++ ".\n"
           else putStr $ "\nBest move is column " ++ show move
 
+playGame :: Game -> Int -> Bool -> IO()
+playGame (p,b) depth True 
+  | p == Red = 
+              let (rating, move) = whoMightWin (p,b) depth
+                  parsedMove = fromMaybe 0 move
+                  newBoard = makeMove (p,b) parsedMove
+              in if parsedMove == 0 
+                then putStrLn $ "\nThe winner is " ++ decipherRating rating ++ "!!\n\n"
+                else do putStrLn $ "\n_________________________________________________\n\n\nthe computers move is " ++ show (fromJust move) ++ ".\n" -- ++ prettyPrint newBoard
+                        playGame newBoard depth True
+  | p == Yellow = 
+              do  putStrLn $ prettyPrint (p,b)
+                  if isJust (wonGame b)
+                  then putStrLn $ "\nThe winner is " ++ show (fromJust (wonGame b)) ++ "!!\n\n"
+                  else do moveS <- prompt "What column do you want to move in?\n"
+                          let move = fromMaybe 0 (readMaybe moveS)
+                           in if move == 0 || not (checkMove b move)
+                              then do putStrLn "\n\n\n\nnot a valid move"
+                                      playGame (p,b) depth True
+                              else let newboard = makeMove (p,b) move
+                                   in do putStrLn $ "\n_________________________________________________\n\n\n" ++ prettyPrint newboard
+                                         playGame newboard depth True
+playGame (p,b) depth False 
+  | p == Red = 
+              let (rating, move) = whoMightWin (p,b) depth
+                  parsedMove = fromMaybe 0 move
+                  newBoard = makeMove (p,b) parsedMove
+              in if parsedMove == 0 
+                then putStrLn $ "\nThe winner is " ++ decipherRating rating ++ "!!\n\n"
+                else do putStrLn "\n_________________________________________________\n\n\n"
+                        playGame newBoard depth False
+  | p == Yellow = 
+              do  putStrLn $ prettyPrint (p,b)
+                  if isJust (wonGame b)
+                  then putStrLn $ "\nThe winner is " ++ show (fromJust (wonGame b)) ++ "!!\n\n"
+                  else do moveS <- prompt "What column do you want to move in?\n"
+                          let move = fromMaybe 0 (readMaybe moveS)
+                           in if move == 0 || not (checkMove b move)
+                              then do putStrLn "\n\n\n\nnot a valid move"
+                                      playGame (p,b) depth False
+                              else let newboard = makeMove (p,b) move
+                                   in do putStrLn $ "\n_________________________________________________\n\n\n" ++ prettyPrint newboard
+                                         playGame newboard depth False
+                  
 
 -- helper function to convert the winner data type to a string
 winnerToString :: Winner -> String
